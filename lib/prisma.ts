@@ -5,7 +5,7 @@ import 'dotenv/config';
 
 // 1. إنشاء الـ Pool الخاص بمكتبة pg
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // استخدم DATABASE_URL للـ Docker المحلي
+	connectionString: process.env.DATABASE_URL, // استخدم DATABASE_URL للـ Docker المحلي
 });
 
 // 2. ربط الـ Pool بمحول Prisma
@@ -15,12 +15,12 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 // 3. تشغيل العميل مع المحول
 export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    adapter,
-    log: ['query', 'warn', 'error'],
-  });
+	globalForPrisma.prisma ??
+	new PrismaClient({
+		adapter,
+		log: ['query', 'warn', 'error'],
+	});
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
+	globalForPrisma.prisma = prisma;
 }

@@ -1,32 +1,32 @@
 @import 'tailwindcss';
 
 @theme {
-  /* تعريف الألوان المخصصة - ستتحول تلقائياً إلى كلاسات مثل bg-brand أو text-brand */
-  --color-brand: #22c55e;
-  --color-error: #ef4444;
+	/* تعريف الألوان المخصصة - ستتحول تلقائياً إلى كلاسات مثل bg-brand أو text-brand */
+	--color-brand: #22c55e;
+	--color-error: #ef4444;
 
-  /* ربط متغير الخط بـ Tailwind */
-  --font-sans: var(--font-cairo), ui-sans-serif, system-ui;
+	/* ربط متغير الخط بـ Tailwind */
+	--font-sans: var(--font-cairo), ui-sans-serif, system-ui;
 
-  /* تخصيص الخلفية والنصوص العامة */
-  --color-background: #f9f9f9;
-  --color-foreground: #111827;
+	/* تخصيص الخلفية والنصوص العامة */
+	--color-background: #f9f9f9;
+	--color-foreground: #111827;
 }
 
 /* تخصيص الوضع الليلي داخل التيم */
 @media (prefers-color-scheme: dark) {
-  @theme {
-    --color-background: #111827;
-    --color-foreground: #f9fafb;
-    --color-error: #f87171;
-  }
+	@theme {
+		--color-background: #111827;
+		--color-foreground: #f9fafb;
+		--color-error: #f87171;
+	}
 }
 
 /* إعدادات الجسم الأساسية */
 @layer base {
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: 'cv11', 'ss01';
-    -webkit-font-smoothing: antialiased;
-  }
+	body {
+		@apply bg-background text-foreground;
+		font-feature-settings: 'cv11', 'ss01';
+		-webkit-font-smoothing: antialiased;
+	}
 }
