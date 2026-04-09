@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
 			);
 		}
 		//check password
-		const isValid = await comparePasswords(parsed.data.password, user.passwordHash);
+		const isValid = await comparePasswords(parsed.data.password, String(user.passwordHash));
 		if (!isValid) {
 			return NextResponse.json<LoginResponse>(
 				{ ok: false, error: 'بيانات تسجيل الدخول غير صحيحة' },

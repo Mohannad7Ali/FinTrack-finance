@@ -26,10 +26,24 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // wallets       Wallet[]
+  wallets Wallet[]
   // transactions  Transaction[]
   // categories    Category[] @relation("UserCategories")
   // budgets       Budget[]
 
   @@unique([provider, providerId]) // to ensure no duplicate Google users
+}
+
+model Wallet {
+  id        Int      @id @default(autoincrement())
+  name      String
+  balance   Decimal  @default(0)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // transactions Transaction[]
+
+  @@index([userId])
 }

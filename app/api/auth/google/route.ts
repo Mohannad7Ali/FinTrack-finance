@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 			});
 		}
 
-		const jwt = signJwt({ sub: String(user.id) });
+		const jwt = signJwt({ sub: String(user.id), email: user.email });
 		const cookieStore = await cookies();
 		cookieStore.set('token', jwt, {
 			httpOnly: true,
