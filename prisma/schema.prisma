@@ -14,24 +14,17 @@ datasource db {
 }
 
 model User {
-  id           Int     @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   name         String
-  email        String  @unique
-  passwordHash String? // nullable لأن Google users ما عندهم password
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  image      String? // صورة المستخدم من Google
-  provider   String  @default("credentials") // "credentials" | "google"
-  providerId String? // Google user ID
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  wallets Wallet[]
-  // transactions  Transaction[]
-  // categories    Category[] @relation("UserCategories")
-  // budgets       Budget[]
-
-  @@unique([provider, providerId]) // to ensure no duplicate Google users
+  wallets      Wallet[]
+  transactions Transaction[]
+  categories   Category[]    @relation("UserCategories")
+  // budgets      Budget[]
 }
 
 model Wallet {
@@ -43,7 +36,51 @@ model Wallet {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // transactions Transaction[]
+  transactions Transaction[]
 
   @@index([userId])
+}
+
+enum TxType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String
+  icon      String?
+  userId    Int?
+  user      User?    @relation("UserCategories", fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+  // budgets      Budget[]
+
+  @@unique([userId, name])
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  type        TxType
+  amount      Decimal
+  occurredAt  DateTime
+  description String?
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  walletId Int
+  wallet   Wallet @relation(fields: [walletId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, occurredAt])
+  @@index([categoryId])
+  @@index([walletId])
 }
