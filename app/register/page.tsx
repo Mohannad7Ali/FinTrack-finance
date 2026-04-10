@@ -9,21 +9,21 @@ import useSWRMutation from 'swr/mutation';
 import Input from '@/components/Input';
 // تعريف نوع الاستجابة من API
 type RegisterResponse = { ok: true } | { ok: false; error: string };
+type RegisterArgs = { name: string; email: string; password: string };
 // دالة إرسال الطلب (Fetcher)
-async function registerFetcher(
+const registerFetcher = async (
 	url: string,
 	{ arg }: { arg: { name: string; email: string; password: string } }
-): Promise<RegisterResponse> {
+): Promise<RegisterResponse> => {
 	const res = await fetch(url, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(arg),
-		credentials: 'include', // مهم لإرسال واستقبال الكوكيز
+		credentials: 'include',
 	});
-	const data = await res.json();
 
-	return data;
-}
+	return res.json();
+};
 export default function RegisterPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -36,7 +36,7 @@ export default function RegisterPage() {
 	});
 
 	// استخدام SWR Mutation  انشاء حساب
-	const { trigger, isMutating } = useSWRMutation<RegisterResponse>(
+	const { trigger, isMutating } = useSWRMutation<RegisterResponse, any, string, RegisterArgs>(
 		'/api/auth/register',
 		registerFetcher
 	);
