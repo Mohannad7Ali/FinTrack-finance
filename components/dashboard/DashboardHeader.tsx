@@ -1,101 +1,122 @@
 'use client';
+
+import React, { memo } from 'react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { weekdaysAr, monthNamesAr } from '@/lib/constants/date.constant';
 import { useWeather } from '@/hooks/useWeather';
 import { useME } from '@/hooks/useMe';
-type Props = {
+
+interface Props {
 	month: number;
 	year: number;
 	onLogout: () => void;
-};
+}
 
-type WeatherData = {
-	temp: number;
-	condition: string; // بالعربية
-	icon: string; // أيقونة تعبيرية
-	location: string;
-};
+function DashboardHeaderComponent({ month, year, onLogout }: Props) {
+	// جلب البيانات من الـ Hooks
+	const { weather, isLoading: isWeatherLoading, error: weatherError, refetch } = useWeather();
+	const { data: userData } = useME();
 
-export function DashboardHeader({ month, year, onLogout }: Props) {
-	const { weather, isLoading, error, refetch } = useWeather();
-	const userData = useME();
+	// حسابات التاريخ الحالي
 	const today = new Date();
 	const currentDayName = weekdaysAr[today.getDay()];
 	const currentDayNumber = today.getDate();
 	const currentMonthName = monthNamesAr[today.getMonth()];
-	const currentYear = today.getFullYear();
-	const displayMonthName = monthNamesAr[month - 1];
+	const currentFullYear = today.getFullYear();
 
 	return (
 		<header
 			dir="rtl"
-			className="w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-6 md:px-10 md:py-6 bg-gradient-to-l from-indigo-900/80 via-purple-900/80 to-slate-900/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/10"
+			className="relative w-full overflow-hidden flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 p-6 md:px-8 md:py-7 bg-slate-900/40 backdrop-blur-md rounded-[2rem] border border-white/10 shadow-2xl"
 		>
-			{/* قسم العنوان والتاريخ */}
-			<div className="flex flex-col gap-1">
-				<h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-2">
-					<span>📊</span> لوحة التحكم
-				</h1>
-				<h2 className="text-xl md:text-xl font-bold text-white flex items-center gap-2">
-					<span>👋 أهلاً بك</span>
-					{userData.data?.name ? userData.data?.name : ''}
-				</h2>
-				<div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-300 text-lg">
-					<span className="hidden md:inline text-slate-500">|</span>
-					<span className="flex items-center gap-1 text-emerald-300">
-						<span>🕊️</span> اليوم:
-						<span className="font-semibold text-white">
-							{currentDayName} {currentDayNumber} {monthNamesAr[today.getMonth()]} {currentYear}
-						</span>
-					</span>
+			{/* تأثير ضوئي خلفي بسيط */}
+			<div className="absolute -top-24 -left-24 w-48 h-48 bg-purple-600/20 rounded-full blur-[80px] pointer-events-none" />
+
+			<div className="flex flex-col gap-4 z-10">
+				{/* شارة النظام */}
+				<div className="w-fit inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-1 text-[10px] uppercase tracking-wider text-emerald-400">
+					<span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+					نظام الإدارة المالية الذكي
 				</div>
-				<p className="text-slate-400 text-sm md:text-base mt-1">
-					نظرة عامة على وضعك المالي لهذا الشهر.
-				</p>
+
+				{/* الترحيب والعنوان */}
+				<div>
+					<h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+						<span className="bg-white/10 p-2 rounded-xl shadow-inner">📊</span>
+						لوحة التحكم
+						<span className="text-slate-500 font-light text-xl md:text-2xl mr-2">
+							— {month.toString().padStart(2, '0')}/{year}
+						</span>
+					</h1>
+
+					<div className="mt-2 flex flex-col gap-1">
+						<h2 className="text-lg md:text-xl text-slate-200 font-medium">
+							أهلاً بك،{' '}
+							<span className="text-purple-400">{userData?.name || 'مستخدمنا العزيز'}</span> ✨
+						</h2>
+						<p className="text-sm text-slate-400 flex items-center gap-2">
+							<span>📅</span>
+							اليوم هو {currentDayName}، {currentDayNumber} {currentMonthName} {currentFullYear}
+						</p>
+					</div>
+				</div>
 			</div>
 
-			{/* قسم الطقس */}
-			<div className="flex items-center gap-3 bg-white/5 rounded-2xl px-4 py-2 border border-white/10 backdrop-blur-sm">
-				{isLoading ? (
-					<div className="flex items-center gap-2 text-slate-400">
-						<span className="animate-pulse">⏳</span> جلب الطقس...
-					</div>
-				) : error ? (
-					<div className="text-slate-400 text-sm flex items-center gap-1">
-						<span>⚠️</span> {error}
-						<button onClick={refetch} className="mr-2 text-xs underline">
-							إعادة المحاولة
-						</button>
-					</div>
-				) : weather ? (
-					<div className="flex items-center gap-3 text-white">
-						<div className="text-3xl">{weather.conditionIcon}</div>
-						<div className="flex flex-col">
-							<span className="text-lg font-semibold">
-								{weather.condition} • {weather.temp}°C
-							</span>
-							<span className="text-xs text-slate-400">{weather.location}</span>
+			<div className="flex flex-col sm:flex-row items-center gap-4 z-10">
+				{/* قسم الطقس  */}
+				<div className="w-full sm:w-auto flex items-center gap-4 bg-white/5 hover:bg-white/10 transition-colors duration-300 rounded-2xl px-4 py-3 border border-white/10 backdrop-blur-xl">
+					{isWeatherLoading ? (
+						<div className="flex items-center gap-3 text-slate-400 text-sm">
+							<div className="w-4 h-4 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
+							جاري تحديث الأجواء...
 						</div>
-					</div>
-				) : null}
-			</div>
+					) : weatherError ? (
+						<div className="text-slate-400 text-xs flex items-center gap-2">
+							<span className="text-orange-400">⚠️</span>
+							{weatherError}
+							<button
+								onClick={() => refetch()}
+								className="bg-white/5 px-2 py-1 rounded-lg hover:bg-white/10 transition text-emerald-400"
+							>
+								تحديث
+							</button>
+						</div>
+					) : weather ? (
+						<div className="flex items-center gap-3">
+							<span className="text-3xl drop-shadow-md">{weather.conditionIcon}</span>
+							<div className="flex flex-col leading-tight">
+								<span className="text-sm font-bold text-white">
+									{weather.temp}°C {weather.condition}
+								</span>
+								<span className="text-[10px] text-slate-500 font-medium uppercase tracking-tighter">
+									{weather.location}
+								</span>
+							</div>
+						</div>
+					) : null}
+				</div>
 
-			{/* أزرار الإجراءات */}
-			<div className="flex items-center gap-3 self-start lg:self-auto">
-				<Link
-					href="/categories"
-					className="flex items-center gap-1 px-4 py-2 rounded-xl bg-white/5 border border-white/20 text-white font-medium hover:bg-white/10 transition-all duration-200"
-				>
-					<span>🧾</span> إدارة الفئات
-				</Link>
-				<button
-					onClick={onLogout}
-					className="flex items-center gap-1 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/40 text-red-300 font-medium hover:bg-red-500/20 transition-all duration-200"
-				>
-					<span>🚪</span> تسجيل الخروج
-				</button>
+				{/* أزرار الإجراءات */}
+				<div className="flex items-center gap-2 w-full sm:w-auto">
+					<Link
+						href="/categories"
+						className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-100 text-sm font-semibold hover:bg-indigo-600/30 hover:border-indigo-500/50 transition-all duration-300 shadow-lg shadow-indigo-900/20"
+					>
+						<span>📁</span>
+						الفئات
+					</Link>
+
+					<button
+						onClick={onLogout}
+						className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm font-semibold hover:bg-red-500/20 hover:border-red-500/40 transition-all duration-300"
+					>
+						<span>🚪</span>
+						خروج
+					</button>
+				</div>
 			</div>
 		</header>
 	);
 }
+
+export const DashboardHeader = memo(DashboardHeaderComponent);

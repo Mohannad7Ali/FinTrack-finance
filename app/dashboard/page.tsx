@@ -9,11 +9,18 @@ export default function Dashboard() {
 	const month = today.getMonth() + 1;
 	const year = today.getFullYear();
 	const { data, error, isLoading, refresh } = useSummary(month, year);
-
+	async function handleDeleteTransaction() {}
 	if (isLoading) {
 		return (
-			<div className="flex items-center justify-center min-h-screen text-slate-300">
+			<div className="flex items-center justify-center min-h-screen text-slate-300 animate-pulse">
 				جاري التحميل...
+			</div>
+		);
+	}
+	if (error) {
+		return (
+			<div className="flex items-center justify-center min-h-screen text-red-400 animate-bounce">
+				{error}
 			</div>
 		);
 	}
@@ -47,16 +54,19 @@ export default function Dashboard() {
 					description="صافي الرصيد لهذا الشهر."
 				/>
 			</div>
-			<br />
-			<CategoryChart
-				data={[
-					{ name: 'Category 1', value: 5 },
-					{ name: 'Category 2', value: 1 },
-					{ name: 'Category 43', value: 15 },
-					{ name: 'Category 4', value: 21 },
-				]}
-			/>
-			<TransactionTable transactions={[]} onDelete={(id) => console.log(id)} />
+			{/* مخطط الفئات */}
+			<div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+				<h2 className="mb-4 text-sm text-slate-200">المصروفات حسب الفئة</h2>
+				<CategoryChart data={data.categoriesChart} />
+			</div>
+			{/* جدول المعاملات */}
+			<div>
+				<h2 className="mb-3 text-sm text-slate-200">معاملات هذا الشهر</h2>
+				<TransactionTable
+					transactions={data.transactions || []}
+					onDelete={handleDeleteTransaction}
+				/>
+			</div>
 		</main>
 	);
 }

@@ -39,8 +39,8 @@ const CategoryChart = ({ data }: Props) => {
 
 	if (!data || data.length === 0) {
 		return (
-			<div className="flex h-80 items-center justify-center border-2 border-dashed border-slate-200 bg-slate-50 rounded-2xl">
-				<p className="text-sm text-slate-400 font-medium">لا توجد بيانات للعرض</p>
+			<div className="flex h-80 items-center justify-center border-2 border-dashed border-slate-200 bg-slate-800 rounded-2xl">
+				<p className="text-sm text-slate-500 font-medium">لا توجد بيانات للعرض</p>
 			</div>
 		);
 	}
