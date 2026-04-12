@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyJwt } from '@/lib/auth/utils';
 import { prisma } from '@/lib/prisma';
-type MeResponse =
+export type MeResponse =
 	| { ok: true; userId?: number | null; name?: string; email?: string; authenticated?: boolean }
 	| { ok: false; error?: string; authenticated?: boolean };
 

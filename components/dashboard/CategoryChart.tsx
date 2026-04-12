@@ -46,7 +46,7 @@ const CategoryChart = ({ data }: Props) => {
 	}
 
 	return (
-		<div className="h-[400px] w-full rounded-3xl border border-white/20 bg-white/10 backdrop-blur-2xl p-6 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] transition-all duration-500 hover:bg-white/12">
+		<div className="w-full   h-[400px] md:h-[450px] lg:h-[500px] rounded-3xl border border-white/20 bg-white/10 backdrop-blur-2xl p-6 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] transition-all duration-500 hover:bg-white/12">
 			<ResponsiveContainer width="100%" height="100%">
 				<PieChart>
 					<Pie

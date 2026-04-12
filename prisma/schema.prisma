@@ -17,7 +17,10 @@ model User {
   id           Int      @id @default(autoincrement())
   name         String
   email        String   @unique
-  passwordHash String
+  image        String?
+  provider     String? // "google" أو "credentials"
+  providerId   String? // معرف المستخدم من مزود الهوية (مثل Google)
+  passwordHash String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
