@@ -2,7 +2,14 @@
 import useSWR from 'swr';
 import { fetcher } from '@/lib/fetcher';
 export type MeResponse =
-	| { ok: true; userId?: number | null; name?: string; email?: string; authenticated?: boolean }
+	| {
+			ok: true;
+			userId?: number | null;
+			name?: string;
+			email?: string;
+			authenticated?: boolean;
+			image?: string | null;
+	  }
 	| { ok: false; error?: string; authenticated?: boolean };
 export function useME() {
 	const { data, error, isLoading, mutate } = useSWR<MeResponse>(`api/auth/me`, fetcher, {
@@ -23,6 +30,7 @@ export function useME() {
 			userId: null,
 			name: '',
 			email: null,
+			image: null,
 			authenticated: false,
 		},
 		error: error?.message,

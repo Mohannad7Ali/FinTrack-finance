@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Cairo } from 'next/font/google';
 import './globals.css';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
 	title: 'متعقب المصاريف - إدارة مالية سهلة',
@@ -46,14 +47,37 @@ export const metadata: Metadata = {
 const cairo = Cairo({
 	subsets: ['arabic', 'latin'],
 	weight: ['400', '500', '600', '700'],
-	variable: '--font-cairo', // هذا الاسم يجب أن يطابق ما وضعناه في ملف CSS
+	variable: '--font-cairo',
 	display: 'swap',
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="ar" dir="rtl" className={cairo.variable}>
-			<body className="font-sans">{children}</body>
+		<html lang="ar" dir="rtl" suppressHydrationWarning className={cairo.variable}>
+			<body className="font-sans" suppressHydrationWarning>
+				{children}
+				<Toaster
+					position="bottom-right"
+					reverseOrder={false}
+					gutter={8}
+					containerClassName=""
+					containerStyle={{}}
+					toastOptions={{
+						duration: 5000,
+						style: {
+							background: '#363636',
+							color: '#fff',
+						},
+						success: {
+							duration: 3000,
+							iconTheme: {
+								primary: 'green',
+								secondary: 'black',
+							},
+						},
+					}}
+				/>
+			</body>
 		</html>
 	);
 }

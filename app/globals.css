@@ -28,5 +28,6 @@
 		@apply bg-background text-foreground;
 		font-feature-settings: 'cv11', 'ss01';
 		-webkit-font-smoothing: antialiased;
+		font-family: var(--font-cairo), sans-serif;
 	}
 }

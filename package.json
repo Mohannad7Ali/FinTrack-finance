@@ -11,17 +11,22 @@
 		"prepare": "husky"
 	},
 	"dependencies": {
+		"@hookform/resolvers": "^5.2.2",
 		"@prisma/adapter-pg": "^7.6.0",
 		"@prisma/client": "^7.6.0",
 		"bcrypt": "^6.0.0",
 		"google-auth-library": "^10.6.2",
 		"jsonwebtoken": "^9.0.3",
+		"lucide-react": "^1.8.0",
 		"next": "16.2.2",
 		"pg": "^8.20.0",
 		"react": "19.2.4",
 		"react-dom": "19.2.4",
+		"react-hook-form": "^7.72.1",
+		"react-hot-toast": "^2.6.0",
 		"recharts": "^3.8.1",
 		"swr": "^2.4.1",
+		"tailwind-merge": "^3.5.0",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {

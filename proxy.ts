@@ -11,7 +11,7 @@ const PROTECTED_API_PREFIXES = [
 	'/api/wallets',
 ];
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
 	const { pathname } = req.nextUrl;
 	//  استثناء الملفات الثابتة (Performance)
 	if (PUBLIC_FILE_EXTENSIONS.some((ext) => pathname.endsWith(ext))) {

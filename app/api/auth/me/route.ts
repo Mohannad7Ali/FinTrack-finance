@@ -3,7 +3,14 @@ import { cookies } from 'next/headers';
 import { verifyJwt } from '@/lib/auth/utils';
 import { prisma } from '@/lib/prisma';
 export type MeResponse =
-	| { ok: true; userId?: number | null; name?: string; email?: string; authenticated?: boolean }
+	| {
+			ok: true;
+			userId?: number | null;
+			name?: string;
+			email?: string;
+			authenticated?: boolean;
+			image?: string | null;
+	  }
 	| { ok: false; error?: string; authenticated?: boolean };
 
 export async function GET() {
@@ -27,7 +34,7 @@ export async function GET() {
 		}
 		const user = await prisma.user.findUnique({
 			where: { id: parseInt(payload.sub) },
-			select: { id: true, name: true, email: true },
+			select: { id: true, name: true, email: true, image: true },
 		});
 		if (!user) {
 			return NextResponse.json<MeResponse>({
@@ -42,6 +49,7 @@ export async function GET() {
 			userId: user.id,
 			name: user.name,
 			email: user.email,
+			image: user.image ? user.image : null,
 		});
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'حدث خطأغير متوقع';
