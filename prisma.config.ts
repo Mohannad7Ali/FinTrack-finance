@@ -7,6 +7,8 @@ export default defineConfig({
 	schema: 'prisma/schema.prisma',
 	migrations: {
 		path: 'prisma/migrations',
+		// seed: 'npx --loader ts-node prisma/seed.ts',
+		seed: 'npx tsx prisma/seed.ts', // استخدام tsx بدلاً من ts-node
 	},
 	datasource: {
 		// هذا الرابط يستخدمه Prisma فقط أثناء تنفيذ npx prisma migrate
