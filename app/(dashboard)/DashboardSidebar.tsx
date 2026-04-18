@@ -10,6 +10,7 @@ import {
 	ArrowLeftRight,
 	BarChart3,
 	Settings,
+	LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useME } from '@/hooks/useMe';
@@ -19,6 +20,7 @@ import { LogoName } from '@/components/common/LogoName';
 interface SidebarProps {
 	isOpen: boolean;
 	onClose: () => void;
+	onLogout: () => void;
 }
 
 const menuItems = [
@@ -30,7 +32,7 @@ const menuItems = [
 	{ title: 'الإعدادات', href: '/settings', icon: Settings },
 ];
 
-export function DashboardSidebar({ isOpen, onClose }: SidebarProps) {
+export function DashboardSidebar({ isOpen, onClose, onLogout }: SidebarProps) {
 	const pathname = usePathname();
 	const { data: user } = useME();
 
@@ -110,6 +112,13 @@ export function DashboardSidebar({ isOpen, onClose }: SidebarProps) {
 						);
 					})}
 				</nav>
+				<button
+					onClick={onLogout}
+					className="w-full flex items-center gap-3 px-4 py-3 text-sm cursor-pointer text-red-400 hover:bg-red-500/10 transition"
+				>
+					<LogOut size={16} />
+					تسجيل الخروج
+				</button>
 			</aside>
 		</>
 	);

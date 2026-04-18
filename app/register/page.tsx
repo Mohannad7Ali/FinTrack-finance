@@ -9,11 +9,11 @@ import useSWRMutation from 'swr/mutation';
 import Input from '@/components/Input';
 // تعريف نوع الاستجابة من API
 type RegisterResponse = { ok: true } | { ok: false; error: string };
-type RegisterArgs = { name: string; email: string; password: string };
+type RegisterArgs = { name: string; email: string; password: string; currency: string };
 // دالة إرسال الطلب (Fetcher)
 const registerFetcher = async (
 	url: string,
-	{ arg }: { arg: { name: string; email: string; password: string } }
+	{ arg }: { arg: { name: string; email: string; password: string; currency: string } }
 ): Promise<RegisterResponse> => {
 	const res = await fetch(url, {
 		method: 'POST',
@@ -33,6 +33,7 @@ export default function RegisterPage() {
 		email: '',
 		password: '',
 		confirmPassword: '',
+		currency: 'SYP',
 	});
 
 	// استخدام SWR Mutation  انشاء حساب
@@ -192,7 +193,18 @@ export default function RegisterPage() {
 							onChange={(v) => setForm({ ...form, confirmPassword: v })}
 						/>
 					</div>
-
+					<div className="space-y-2">
+						<label className="block text-sm font-medium text-slate-300">العملة المفضلة</label>
+						<select
+							value={form.currency}
+							onChange={(e) => setForm({ ...form, currency: e.target.value })}
+							className="w-full rounded-xl border border-white/10 bg-slate-800/50 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+						>
+							<option value="USD">🇺🇸 دولار أمريكي (USD)</option>
+							<option value="EUR">🇪🇺 يورو (EUR)</option>
+							<option value="SYP">🇸🇾 ليرة سورية (SYP)</option>
+						</select>
+					</div>
 					{/* Error */}
 					{error && (
 						<div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">

@@ -5,7 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/lib/auth/validators';
 import { hashPassword, signJwt } from '@/lib/auth/utils';
 import { cookies } from 'next/headers';
-import { Prisma } from '@/lib/generated/prisma/client';
+import { Prisma } from '@prisma/client';
+import { CurrencyCode } from '../../../../types/finance';
 
 type RegisterResponse =
 	| { ok: true; user: { id: number; name: string; email: string } }
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		const { name, email, password } = parsed.data;
+		const { name, email, password, currency } = parsed.data;
 		const normalizedEmail = email.toLowerCase().trim();
 		const existingEmail = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 		if (existingEmail) {
@@ -48,23 +49,27 @@ export async function POST(req: NextRequest) {
 		const passwordHash = await hashPassword(password);
 
 		//  Create user (NO manual exists check )
-		const newUser = await prisma.user.create({
-			data: {
-				name,
-				email: normalizedEmail,
-				passwordHash,
-				wallets: {
-					create: {
-						name: 'المحفظة الرئيسية',
-						balance: 0,
-					},
+		const newUser = await prisma.$transaction(async (tx) => {
+			const user = await tx.user.create({
+				data: {
+					name,
+					email: normalizedEmail,
+					passwordHash,
+					preferredCurrency: currency, // حفظ العملة المفضلة للمستخدم
 				},
-			},
-			select: {
-				id: true,
-				name: true,
-				email: true,
-			},
+				select: { id: true, name: true, email: true },
+			});
+
+			await tx.wallet.create({
+				data: {
+					name: 'المحفظة الرئيسية',
+					balance: 0,
+					currency: currency, // استخدام العملة التي أرسلها المستخدم
+					userId: user.id,
+				},
+			});
+
+			return user;
 		});
 
 		//  Generate JWT (FIXED TYPE)

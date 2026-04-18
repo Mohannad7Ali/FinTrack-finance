@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 				id: true,
 				name: true,
 				balance: true,
-				currency: true, // تأكد من وجود هذا الحقل في Schema الخاص بك
+				// currency: true,
 				createdAt: true,
 			},
 		});

@@ -20,6 +20,7 @@ export const registerSchema = z.object({
 	email: z.string().email(messages.email.invalid).toLowerCase().trim(),
 
 	password: z.string().min(6, messages.password.min),
+	currency: z.string().default('SYP'), // القيمة الافتراضية SYP
 });
 
 //  Login Schema

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
-import { Cairo } from 'next/font/google';
+import { Cairo } from 'next/font/google'; // فقط Cairo
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
 	title: 'متعقب المصاريف - إدارة مالية سهلة',
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 	authors: [{ name: 'Mohannad Ali', url: 'https://mohannad-ali-portfolio.vercel.app' }],
 	creator: 'Mohannad Ali',
 	publisher: 'Mohannad Ali',
-	metadataBase: new URL('https://your-project-domain.com'), // استبدل هذا بالرابط الفعلي لمشروعك
+	metadataBase: new URL('https://your-project-domain.com'),
 	alternates: {
 		canonical: '/',
 		languages: {
@@ -44,6 +45,7 @@ export const metadata: Metadata = {
 		creator: '@mohannad_ali',
 	},
 };
+
 const cairo = Cairo({
 	subsets: ['arabic', 'latin'],
 	weight: ['400', '500', '600', '700'],
@@ -53,15 +55,18 @@ const cairo = Cairo({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="ar" dir="rtl" suppressHydrationWarning className={cairo.variable}>
+		<html
+			lang="ar"
+			dir="rtl"
+			suppressHydrationWarning
+			className={cn(cairo.variable, 'dark')} // أضف 'dark' هنا و cairo.variable
+		>
 			<body className="font-sans" suppressHydrationWarning>
 				{children}
 				<Toaster
 					position="bottom-right"
 					reverseOrder={false}
 					gutter={8}
-					containerClassName=""
-					containerStyle={{}}
 					toastOptions={{
 						duration: 5000,
 						style: {

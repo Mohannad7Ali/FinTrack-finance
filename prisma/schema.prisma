@@ -14,15 +14,16 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  name         String
-  email        String   @unique
-  image        String?
-  provider     String? // "google" أو "credentials"
-  providerId   String? // معرف المستخدم من مزود الهوية (مثل Google)
-  passwordHash String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  name              String
+  email             String   @unique
+  image             String?
+  preferredCurrency String   @default("SYP")
+  provider          String? // "google" أو "credentials"
+  providerId        String? // معرف المستخدم من مزود الهوية (مثل Google)
+  passwordHash      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   wallets      Wallet[]
   transactions Transaction[]
@@ -35,6 +36,7 @@ model Wallet {
   name      String
   balance   Decimal  @default(0)
   userId    Int
+  currency  String   @default("SYP")
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
