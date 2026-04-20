@@ -1,5 +1,15 @@
 // أنواع العملات المدعومة بشكل أساسي مع السماح بأي عملة أخرى كـ string
-export type CurrencyCode = 'USD' | 'SYP' | 'EUR' | 'GOLD' | string;
+export type CurrencyCode =
+	| 'USD'
+	| 'EUR'
+	| 'SYP'
+	| 'GBP'
+	| 'TRY'
+	| 'AED'
+	| 'SAR'
+	| 'IQD'
+	| 'JOD'
+	| string;
 
 export interface ExchangeData {
 	rates: Record<string, number>;

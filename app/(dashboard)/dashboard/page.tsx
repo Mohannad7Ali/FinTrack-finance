@@ -63,7 +63,7 @@ export default function Dashboard() {
 				<p className="text-xs text-slate-400 mt-1 mb-3">
 					سجل الإيداعات والسحوبات لتحديث الملخص تلقائيًا.
 				</p>
-				<TransactionForm onCreated={handleCreated} />
+				{/* <TransactionForm onCreated={handleCreated} /> */}
 			</div>
 
 			<div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:p-6">

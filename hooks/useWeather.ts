@@ -37,7 +37,10 @@ async function fetchWeatherFromAPI(lat: number, lon: number): Promise<WeatherDat
 			if (geoRes.ok) {
 				const geoData = await geoRes.json();
 				locationName =
-					geoData.address?.city || geoData.address?.town || geoData.address?.village || 'موقعك';
+					geoData.address?.state ||
+					geoData.address?.country ||
+					geoData.address?.country_code ||
+					'موقعك';
 			}
 		} catch (geoError) {
 			console.warn('فشل جلب اسم الموقع:', geoError);
@@ -52,7 +55,7 @@ async function fetchWeatherFromAPI(lat: number, lon: number): Promise<WeatherDat
 			lastUpdated: new Date(),
 		};
 	} catch (error) {
-		console.error('خطأ في جلب الطقس:', error);
+		console.warn('خطأ في جلب الطقس:', error);
 		return null; // لا نرمي خطأ، نرجع null فقط
 	}
 }

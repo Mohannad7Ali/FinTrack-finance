@@ -30,11 +30,8 @@ function DashboardHeaderComponent({ month, year, onLogout, onMenuClick }: Props)
 
 	const [open, setOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
-	const [mounted, setMounted] = useState(false);
+	// const [mounted, setMounted] = useState(false);
 	const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
-	if (typeof window != undefined) {
-		setMounted(true);
-	}
 	// حساب موضع القائمة بدقة لمنع الخروج عن الشاشة (Responsive Fix)
 	useEffect(() => {
 		if (open && menuRef.current) {
@@ -182,7 +179,7 @@ function DashboardHeaderComponent({ month, year, onLogout, onMenuClick }: Props)
 							className="w-11 h-11 rounded-full object-cover border-2 border-white/20 cursor-pointer hover:border-indigo-400 transition"
 							onClick={() => setOpen(!open)}
 						/>
-						{open &&
+						{/* {open &&
 							mounted &&
 							createPortal(
 								<div
@@ -206,7 +203,7 @@ function DashboardHeaderComponent({ month, year, onLogout, onMenuClick }: Props)
 									</button>
 								</div>,
 								document.body
-							)}
+							)} */}
 					</div>
 				</div>
 			</div>
@@ -214,7 +211,7 @@ function DashboardHeaderComponent({ month, year, onLogout, onMenuClick }: Props)
 			{/* شريط أسعار الصرف */}
 			<div className="relative z-10 w-full border-t border-white/10 bg-black/20 backdrop-blur-sm py-2 px-5 md:px-6">
 				<div className="flex items-center gap-5 overflow-x-auto no-scrollbar">
-					<div className="flex items-center gap-2 flex-shrink-0">
+					<div className="flex items-center gap-2 shrink-0">
 						<span className="text-[14px] font-bold text-slate-200 uppercase tracking-wider">
 							USD
 						</span>

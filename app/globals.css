@@ -161,8 +161,41 @@
 	html {
 		@apply font-sans;
 	}
-}
-/* فرض استخدام خط Cairo في كل العناصر */
-* {
-	font-family: var(--font-cairo), sans-serif !important;
+	/* فرض استخدام خط Cairo في كل العناصر */
+	* {
+		font-family: var(--font-cairo), sans-serif !important;
+	}
+	/* تخصيص شريط التمرير للحوارات والمحتوى القابل للتمرير */
+	.custom-scrollbar {
+		scrollbar-width: thin;
+		scrollbar-color: #4a5568 #1e293b;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar {
+		width: 6px;
+		height: 6px;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-track {
+		background: #1e293b;
+		border-radius: 10px;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-thumb {
+		background: #4a5568;
+		border-radius: 10px;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+		background: #64748b;
+	}
+
+	/* في RTL، تأكد من أن شريط التمرير يظهر في الجهة الصحيحة */
+	[dir='rtl'] .custom-scrollbar {
+		scrollbar-width: thin;
+	}
+
+	[dir='rtl'] .custom-scrollbar::-webkit-scrollbar {
+		width: 6px;
+	}
 }
