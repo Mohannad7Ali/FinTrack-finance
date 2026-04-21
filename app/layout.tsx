@@ -3,7 +3,7 @@ import { Cairo } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
-
+import { Providers } from './providers';
 export const metadata: Metadata = {
 	title: 'FinTrack | إدارة مالية ذكية وسهلة',
 	description:
@@ -64,7 +64,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 	return (
 		<html lang="ar" dir="rtl" suppressHydrationWarning className={cn(cairo.variable, 'dark')}>
 			<body className="font-sans" suppressHydrationWarning>
-				{children}
+				<Providers> {children}</Providers>
+
 				<Toaster
 					position="bottom-right"
 					reverseOrder={false}
