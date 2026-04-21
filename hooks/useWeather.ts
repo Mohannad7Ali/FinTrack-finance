@@ -1,12 +1,6 @@
+// hooks/useWeather.ts
 import useSWR from 'swr';
 import { useEffect, useReducer, useRef } from 'react';
-import { weatherCodeMap } from '@/lib/constants/date.constant';
-
-// أنواع البيانات
-export type WeatherCondition = {
-	ar: string;
-	icon: string;
-};
 
 export type WeatherData = {
 	temp: number;
@@ -17,50 +11,6 @@ export type WeatherData = {
 	lastUpdated: Date;
 };
 
-// دالة جلب الطقس مع حماية ضد الأخطاء
-async function fetchWeatherFromAPI(lat: number, lon: number): Promise<WeatherData | null> {
-	try {
-		const weatherRes = await fetch(
-			`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`
-		);
-		if (!weatherRes.ok) throw new Error(`HTTP ${weatherRes.status}`);
-		const weatherData = await weatherRes.json();
-		const temp = Math.round(weatherData.current_weather.temperature);
-		const weatherCode = weatherData.current_weather.weathercode;
-		const conditionInfo = weatherCodeMap[weatherCode] || { ar: 'متقلب', icon: '🌡️' };
-
-		let locationName = 'موقعك';
-		try {
-			const geoRes = await fetch(
-				`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ar`
-			);
-			if (geoRes.ok) {
-				const geoData = await geoRes.json();
-				locationName =
-					geoData.address?.state ||
-					geoData.address?.country ||
-					geoData.address?.country_code ||
-					'موقعك';
-			}
-		} catch (geoError) {
-			console.warn('فشل جلب اسم الموقع:', geoError);
-		}
-
-		return {
-			temp,
-			condition: conditionInfo.ar,
-			conditionIcon: conditionInfo.icon,
-			location: locationName,
-			coordinates: { lat, lon },
-			lastUpdated: new Date(),
-		};
-	} catch (error) {
-		console.warn('خطأ في جلب الطقس:', error);
-		return null; // لا نرمي خطأ، نرجع null فقط
-	}
-}
-
-// حالة تحديد الموقع
 type LocationState = {
 	status: 'idle' | 'loading' | 'success' | 'error';
 	coordinates?: { lat: number; lon: number };
@@ -83,6 +33,19 @@ function locationReducer(state: LocationState, action: LocationAction): Location
 		default:
 			return state;
 	}
+}
+
+async function fetcher(url: string): Promise<WeatherData> {
+	const res = await fetch(url);
+	if (!res.ok) {
+		const error = await res.json();
+		throw new Error(error.error || `HTTP ${res.status}`);
+	}
+	const data = await res.json();
+	return {
+		...data,
+		lastUpdated: new Date(data.lastUpdated),
+	};
 }
 
 export function useWeather() {
@@ -125,7 +88,8 @@ export function useWeather() {
 						break;
 				}
 				dispatch({ type: 'LOCATION_ERROR', payload: message });
-			}
+			},
+			{ enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
 		);
 
 		return () => {
@@ -133,34 +97,23 @@ export function useWeather() {
 		};
 	}, []);
 
-	// بناء مفتاح SWR آمن - إذا لم تكن الإحداثيات موجودة، المفتاح null
 	const swrKey =
-		locationState.status === 'success' &&
-		locationState.coordinates?.lat &&
-		locationState.coordinates?.lon
-			? ['weather', locationState.coordinates.lat, locationState.coordinates.lon]
+		locationState.status === 'success' && locationState.coordinates
+			? `/api/weather?lat=${locationState.coordinates.lat}&lon=${locationState.coordinates.lon}`
 			: null;
 
-	// دالة الجالب: لن تُستدعى إلا إذا كان المفتاح غير null
-	const fetcher = async ([, lat, lon]: [string, number, number]) => {
-		return await fetchWeatherFromAPI(lat, lon);
-	};
-
-	const { data, error, isValidating, mutate } = useSWR(swrKey, fetcher, {
+	const { data, error, isValidating, mutate } = useSWR<WeatherData>(swrKey, fetcher, {
 		revalidateOnFocus: false,
 		revalidateOnReconnect: true,
-		refreshInterval: 30 * 60 * 1000, // 30 دقيقة
+		refreshInterval: 30 * 60 * 1000, // 30 minutes
 		shouldRetryOnError: true,
 		errorRetryCount: 2,
 		errorRetryInterval: 5000,
-		fallbackData: null, // تجنب undefined
+		fallbackData: undefined,
 	});
 
-	// قيمة آمنة للـ weather: دائماً كائن أو null، وليس undefined
-	const safeWeather = data ?? null;
-
 	return {
-		weather: safeWeather,
+		weather: data ?? null,
 		isLoading:
 			locationState.status === 'loading' || (locationState.status === 'success' && isValidating),
 		isLocating: locationState.status === 'loading',

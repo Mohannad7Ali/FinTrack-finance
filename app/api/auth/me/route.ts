@@ -10,6 +10,7 @@ export type MeResponse =
 			email?: string;
 			authenticated?: boolean;
 			image?: string | null;
+			preferredCurrency?: string;
 	  }
 	| { ok: false; error?: string; authenticated?: boolean };
 
@@ -34,7 +35,7 @@ export async function GET() {
 		}
 		const user = await prisma.user.findUnique({
 			where: { id: parseInt(payload.sub) },
-			select: { id: true, name: true, email: true, image: true },
+			select: { id: true, name: true, email: true, image: true, preferredCurrency: true },
 		});
 		if (!user) {
 			return NextResponse.json<MeResponse>({
@@ -50,6 +51,7 @@ export async function GET() {
 			name: user.name,
 			email: user.email,
 			image: user.image ? user.image : null,
+			preferredCurrency: user.preferredCurrency || 'SYP',
 		});
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'حدث خطأغير متوقع';

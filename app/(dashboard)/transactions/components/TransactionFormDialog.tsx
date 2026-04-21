@@ -1,7 +1,7 @@
 // app/(dashboard)/transactions/TransactionFormDialog.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -73,27 +73,38 @@ export function TransactionFormDialog({
 	} = form;
 	const transactionType = watch('type');
 
+	// تجنب إعادة التعيين المتكررة باستخدام useRef
+	const lastResetKey = useRef<string | null>(null);
+
 	useEffect(() => {
-		if (open) {
-			if (editingTx) {
-				reset({
-					type: editingTx.type,
-					amount: editingTx.amount.toString(),
-					occurredAt: new Date(editingTx.occurredAt),
-					description: editingTx.description || '',
-					categoryId: editingTx.category?.id.toString() || '',
-					walletId: editingTx.wallet.id.toString(),
-				});
-			} else {
-				reset({
-					type: 'EXPENSE',
-					amount: '',
-					occurredAt: new Date(),
-					description: '',
-					categoryId: '',
-					walletId: '',
-				});
-			}
+		if (!open) return;
+
+		// مفتاح فريد يعتمد على حالة التعديل
+		const resetKey = editingTx ? `edit-${editingTx.id}` : 'new';
+
+		// إذا كان نفس المفتاح السابق، لا نعيد التعيين
+		if (lastResetKey.current === resetKey) return;
+
+		lastResetKey.current = resetKey;
+
+		if (editingTx) {
+			reset({
+				type: editingTx.type,
+				amount: editingTx.amount.toString(),
+				occurredAt: new Date(editingTx.occurredAt),
+				description: editingTx.description || '',
+				categoryId: editingTx.category?.id.toString() || '',
+				walletId: editingTx.wallet.id.toString(),
+			});
+		} else {
+			reset({
+				type: 'EXPENSE',
+				amount: '',
+				occurredAt: new Date(),
+				description: '',
+				categoryId: '',
+				walletId: '',
+			});
 		}
 	}, [open, editingTx, reset]);
 

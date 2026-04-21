@@ -9,6 +9,7 @@ export type MeResponse =
 			email?: string;
 			authenticated?: boolean;
 			image?: string | null;
+			preferredCurrency?: string;
 	  }
 	| { ok: false; error?: string; authenticated?: boolean };
 export function useME() {
@@ -31,6 +32,7 @@ export function useME() {
 			name: '',
 			email: null,
 			image: null,
+			preferredCurrency: 'SYP',
 			authenticated: false,
 		},
 		error: error?.message,

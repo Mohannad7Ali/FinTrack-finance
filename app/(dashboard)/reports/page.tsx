@@ -17,9 +17,7 @@ export default function ReportsPage() {
 	const [year, setYear] = useState(now.getFullYear());
 
 	const { data, isLoading, error, refresh } = useReports(month, year);
-	useEffect(() => {
-		refresh(); // فرض إعادة جلب البيانات عند تغيير الشهر/السنة
-	}, [month, year, refresh]);
+
 	if (isLoading) {
 		return (
 			<div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 flex items-center justify-center">

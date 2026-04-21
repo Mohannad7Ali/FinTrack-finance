@@ -1,18 +1,25 @@
 import type { Metadata } from 'next';
-import { Cairo } from 'next/font/google'; // فقط Cairo
+import { Cairo } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-	title: 'متعقب المصاريف - إدارة مالية سهلة',
+	title: 'FinTrack | إدارة مالية ذكية وسهلة',
 	description:
-		'تطبيق ويب لإدارة المصاريف الشخصية والمشاريع بسهولة وسرعة. تتبع المصاريف، الإيرادات، والميزانيات في واجهة عربية متكاملة.',
-	keywords: ['مصروفات', 'ميزانية', 'إدارة مالية', 'تطبيق عربي', 'Expense Tracker', 'SaaS'],
+		'تطبيق ويب متكامل لإدارة المصاريف والإيرادات والميزانيات الشخصية. تتبع أموالك بدقة مع واجهة عربية سلسة.',
+	keywords: [
+		'FinTrack',
+		'متعقب المصاريف',
+		'إدارة مالية',
+		'تطبيق عربي',
+		'Expense Tracker',
+		'ميزانية',
+	],
 	authors: [{ name: 'Mohannad Ali', url: 'https://mohannad-ali-portfolio.vercel.app' }],
 	creator: 'Mohannad Ali',
 	publisher: 'Mohannad Ali',
-	metadataBase: new URL('https://your-project-domain.com'),
+	metadataBase: new URL('https://fintrack.vercel.app'), // غيّر إلى رابط مشروعك الفعلي
 	alternates: {
 		canonical: '/',
 		languages: {
@@ -20,17 +27,17 @@ export const metadata: Metadata = {
 		},
 	},
 	openGraph: {
-		title: 'متعقب المصاريف - إدارة مالية سهلة',
+		title: 'FinTrack | إدارة مالية ذكية وسهلة',
 		description:
-			'تطبيق ويب لإدارة المصاريف الشخصية والمشاريع بسهولة وسرعة. تتبع المصاريف، الإيرادات، والميزانيات في واجهة عربية متكاملة.',
-		url: 'https://your-project-domain.com',
-		siteName: 'متعقب المصاريف',
+			'تطبيق ويب متكامل لإدارة المصاريف والإيرادات والميزانيات الشخصية. تتبع أموالك بدقة مع واجهة عربية سلسة.',
+		url: 'https://fintrack.vercel.app',
+		siteName: 'FinTrack',
 		images: [
 			{
-				url: 'https://your-project-domain.com/og-image.png',
+				url: 'https://fintrack.vercel.app/og-image.png',
 				width: 1200,
 				height: 630,
-				alt: 'متعقب المصاريف',
+				alt: 'FinTrack - لوحة التحكم المالية',
 			},
 		],
 		locale: 'ar_AR',
@@ -38,10 +45,10 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'متعقب المصاريف - إدارة مالية سهلة',
+		title: 'FinTrack | إدارة مالية ذكية وسهلة',
 		description:
-			'تطبيق ويب لإدارة المصاريف الشخصية والمشاريع بسهولة وسرعة. تتبع المصاريف، الإيرادات، والميزانيات في واجهة عربية متكاملة.',
-		images: ['https://your-project-domain.com/og-image.png'],
+			'تطبيق ويب متكامل لإدارة المصاريف والإيرادات والميزانيات الشخصية. تتبع أموالك بدقة مع واجهة عربية سلسة.',
+		images: ['https://fintrack.vercel.app/og-image.png'],
 		creator: '@mohannad_ali',
 	},
 };
@@ -55,12 +62,7 @@ const cairo = Cairo({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html
-			lang="ar"
-			dir="rtl"
-			suppressHydrationWarning
-			className={cn(cairo.variable, 'dark')} // أضف 'dark' هنا و cairo.variable
-		>
+		<html lang="ar" dir="rtl" suppressHydrationWarning className={cn(cairo.variable, 'dark')}>
 			<body className="font-sans" suppressHydrationWarning>
 				{children}
 				<Toaster

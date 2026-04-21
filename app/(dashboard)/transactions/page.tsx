@@ -151,6 +151,7 @@ export default function TransactionsPage() {
 			/>
 
 			<TransactionFormDialog
+				key={editingTx?.id ?? 'new'}
 				open={showAddDialog}
 				onOpenChange={setShowAddDialog}
 				editingTx={editingTx}

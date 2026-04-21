@@ -1,54 +1,94 @@
+// components/dashboard/TransactionTable.tsx
 'use client';
 
 import { Tx } from '@/types/summary';
+
 type Props = {
 	transactions: Tx[];
 	onDelete: (id: number) => void;
 };
 
 export function TransactionTable({ transactions, onDelete }: Props) {
+	if (transactions.length === 0) {
+		return (
+			<div className="text-center py-12 text-slate-400 text-sm">لا توجد معاملات لهذا الشهر</div>
+		);
+	}
+
 	return (
-		<div className="bg-white/5 border border-white/10 backdrop-blur-2xl overflow-hidden shadow-lg rounded-2xl">
-			<table className="w-full test-xs md:text-sm">
-				<thead className="bg-slate-900/60 border-b border-white/10">
-					<tr>
-						<th className="p-3 text-left text-slate-300">التاريخ</th>
-						<th className="p-3 text-left text-slate-300">الوصف</th>
-						<th className="p-3 text-left text-slate-300">الفئة</th>
-						<th className="p-3 text-left text-slate-300">القيمة</th>
-						<th className="p-3 text-left text-slate-300">إجراءات</th>
-					</tr>
-				</thead>
-				<tbody>
-					{transactions.map((t) => (
-						<tr key={t.id}>
-							<td className="p-3">{new Date(t.occurredAt).toLocaleDateString('ar')}</td>
-							<td className="p-3">{t.description || '-'}</td>
-							<td className="p-3">{t.category?.name || 'بدون فئة'}</td>
-							<td
-								className={`p-3 text-right font-semibold ${t.type === 'INCOME' ? 'text-emerald-500' : 'text-red-500'}`}
+		<>
+			{/* عرض الجدول على الشاشات المتوسطة والكبيرة */}
+			<div className="hidden md:block overflow-x-auto">
+				<table className="w-full text-xs md:text-sm">
+					<thead className="bg-slate-900/60 border-b border-white/10">
+						<tr>
+							<th className="p-3 text-right text-slate-300">التاريخ</th>
+							<th className="p-3 text-right text-slate-300">الوصف</th>
+							<th className="p-3 text-right text-slate-300">الفئة</th>
+							<th className="p-3 text-right text-slate-300">القيمة</th>
+							<th className="p-3 text-right text-slate-300">إجراءات</th>
+						</tr>
+					</thead>
+					<tbody>
+						{transactions.map((t) => (
+							<tr key={t.id} className="border-b border-white/5 hover:bg-white/5">
+								<td className="p-3 whitespace-nowrap">
+									{new Date(t.occurredAt).toLocaleDateString('ar')}
+								</td>
+								<td className="p-3">{t.description || '-'}</td>
+								<td className="p-3">{t.category?.name || 'بدون فئة'}</td>
+								<td
+									className={`p-3 font-semibold ${t.type === 'INCOME' ? 'text-emerald-500' : 'text-red-500'}`}
+								>
+									{t.type === 'INCOME' ? '+' : '-'} {t.amount.toFixed(2)}
+								</td>
+								<td className="p-3">
+									<button
+										onClick={() => onDelete(t.id)}
+										className="text-red-500 hover:text-red-700 transition"
+									>
+										حذف
+									</button>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+
+			{/* عرض البطاقات على الجوال */}
+			<div className="block md:hidden space-y-3">
+				{transactions.map((t) => (
+					<div key={t.id} className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
+						<div className="flex justify-between items-start">
+							<span className="text-slate-400 text-xs">
+								{new Date(t.occurredAt).toLocaleDateString('ar')}
+							</span>
+							<span
+								className={`font-bold text-sm ${t.type === 'INCOME' ? 'text-emerald-500' : 'text-red-500'}`}
 							>
 								{t.type === 'INCOME' ? '+' : '-'} {t.amount.toFixed(2)}
-							</td>
-							<td className="p-3 text-right">
-								<button
-									onClick={() => onDelete(t.id)}
-									className="text-red-500 hover:text-red-700 hover:underline transition-all duration-150"
-								>
-									حذف
-								</button>
-							</td>
-						</tr>
-					))}
-					{transactions.length === 0 && (
-						<tr>
-							<td colSpan={5} className="p-4 text-center text-slate-400">
-								لا توجد معاملات لهذا الشهر
-							</td>
-						</tr>
-					)}
-				</tbody>
-			</table>
-		</div>
+							</span>
+						</div>
+						<div className="grid grid-cols-2 gap-2 text-sm">
+							<div>
+								<span className="text-slate-400">الوصف:</span> {t.description || '-'}
+							</div>
+							<div>
+								<span className="text-slate-400">الفئة:</span> {t.category?.name || 'بدون فئة'}
+							</div>
+						</div>
+						<div className="flex justify-end pt-2">
+							<button
+								onClick={() => onDelete(t.id)}
+								className="text-red-500 text-sm hover:underline"
+							>
+								حذف
+							</button>
+						</div>
+					</div>
+				))}
+			</div>
+		</>
 	);
 }

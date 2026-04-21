@@ -53,7 +53,6 @@ export async function GET(req: NextRequest) {
 			// QUERY 4: Get all user categories to map category IDs to names
 			// Needed because groupBy queries don't support 'include' for relations
 			prisma.category.findMany({
-				where: { userId },
 				select: { id: true, name: true },
 			}),
 		]);

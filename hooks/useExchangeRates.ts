@@ -1,52 +1,42 @@
+// hooks/useExchangeRates.ts
 'use client';
 import { CurrencyCode, ExchangeData } from '@/types/finance';
 import useSWR from 'swr';
 import { useCallback } from 'react';
 
-const REFRESH_INTERVAL = 60000;
+// تحديث كل 6 ساعات (لتتناسب مع الـ API الوسيط)
+const REFRESH_INTERVAL = 3 * 60 * 60 * 1000;
 
 const fetcher = async (): Promise<ExchangeData> => {
-	try {
-		const fiatRes = await fetch('https://api.budjet.org/fiat/USD');
-		const fiatData = await fiatRes.json();
-
-		let rates = {};
-		if (fiatData?.conversion_rates) {
-			rates = fiatData.conversion_rates;
-			console.log('✅ Fiat rates loaded:', Object.keys(rates).slice(0, 5));
-		} else if (fiatData?.rates) {
-			rates = fiatData.rates;
-		} else {
-			console.warn('❌ Fiat API response unexpected:', fiatData);
-		}
-
-		return {
-			rates,
-			goldPrice: 0, // لا نستخدمه، لكن للحفاظ على التوافق مع الـ type
-			timestamp: Date.now(),
-		};
-	} catch (err) {
-		console.warn('Fetcher error:', err);
-		return { rates: {}, goldPrice: 0, timestamp: Date.now() };
+	const res = await fetch('/api/exchange-rates');
+	if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+	const data = await res.json();
+	if (data && data.rates) {
+		return { rates: data.rates, goldPrice: 0, timestamp: Date.now() };
 	}
+	return { rates: {}, goldPrice: 0, timestamp: Date.now() };
 };
 
 export function useExchangeRates() {
-	const { data, error, isLoading, mutate } = useSWR<ExchangeData>('exchange-rates', fetcher, {
-		refreshInterval: REFRESH_INTERVAL,
-		revalidateOnFocus: true,
-		shouldRetryOnError: true,
-		dedupingInterval: 5000,
-	});
+	const { data, error, isLoading, mutate } = useSWR<ExchangeData>(
+		'exchange-rates-syria-api',
+		fetcher,
+		{
+			refreshInterval: REFRESH_INTERVAL,
+			revalidateOnFocus: false, // لا نطلب عند التركيز لتوفير الطلبات
+			revalidateOnReconnect: false,
+			shouldRetryOnError: true,
+			dedupingInterval: 60000,
+		}
+	);
 
 	const convert = useCallback(
 		(amount: number, from: CurrencyCode = 'USD', to: CurrencyCode = 'SYP'): number => {
-			// إزالة دعم GOLD بالكامل
-			if (!data?.rates || Object.keys(data.rates).length === 0 || !amount) return 0;
+			if (!amount) return 0;
+			if (!data?.rates || Object.keys(data.rates).length === 0) return 0;
 
 			try {
 				let amountInUSD: number;
-
 				if (from === 'USD') {
 					amountInUSD = amount;
 				} else {
@@ -54,15 +44,9 @@ export function useExchangeRates() {
 					if (!rateToUSD) return 0;
 					amountInUSD = amount / rateToUSD;
 				}
-
-				if (to === 'SYP') {
-					const sypRate = data.rates['SYP'];
-					if (!sypRate) return 0;
-					return amountInUSD * sypRate;
-				} else {
-					const targetRate = data.rates[to];
-					return targetRate ? amountInUSD * targetRate : 0;
-				}
+				if (to === 'USD') return amountInUSD;
+				const targetRate = data.rates[to];
+				return targetRate ? amountInUSD * targetRate : 0;
 			} catch (err) {
 				console.warn('Conversion error:', err);
 				return 0;
@@ -74,7 +58,7 @@ export function useExchangeRates() {
 	return {
 		convert,
 		rates: data?.rates,
-		goldPrice: data?.goldPrice, // سيظل 0 دائماً
+		goldPrice: data?.goldPrice,
 		isLoading,
 		isError: !!error,
 		refresh: () => mutate(),
