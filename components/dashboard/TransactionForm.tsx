@@ -2,20 +2,21 @@
 import type React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/fetcher';
-import { transactionSchema } from '@/lib/validators';
+import {
+	transactionFormSchema,
+	type TransactionFormValues,
+	transformFormToApi,
+} from '@/lib/validators';
 import Link from 'next/link';
-// Types
+import { useState } from 'react';
+
 type Category = { id: number; name: string };
 type Wallet = { id: number; name: string };
 type Props = { onCreated: () => void };
-type TransactionFormVlues = z.infer<typeof transactionSchema>;
 
-// Transaction Form component
 function TransactionForm({ onCreated }: Props) {
-	// get data using swr with cach and error handling
 	const { data: catData, isLoading: catLoading } = useSWR<{
 		ok: boolean;
 		categories: Category[];
@@ -27,7 +28,8 @@ function TransactionForm({ onCreated }: Props) {
 	const categories = catData?.categories || [];
 	const wallets = walData?.wallets || [];
 
-	// ------ React Hook From setting
+	const [submitError, setSubmitError] = useState<string | null>(null);
+
 	const {
 		register,
 		handleSubmit,
@@ -35,18 +37,41 @@ function TransactionForm({ onCreated }: Props) {
 		watch,
 		reset,
 		formState: { errors, isSubmitting },
-	} = useForm<TransactionFormVlues>({
-		resolver: zodResolver(transactionSchema),
+	} = useForm<TransactionFormValues>({
+		resolver: zodResolver(transactionFormSchema),
 		defaultValues: {
 			type: 'EXPENSE',
 			amount: '',
-			date: '',
+			occurredAt: new Date(), // التاريخ الحالي كـ Date
 			description: '',
+			categoryId: '',
+			walletId: '',
 		},
 	});
-	const transactionType = watch('type'); // نراقب النوع فقط لتغيير لون الأزرار
-	const onSubmit = () => {};
-	// --- أنماط التصميم ---
+
+	const transactionType = watch('type');
+
+	const onSubmit = async (data: TransactionFormValues) => {
+		setSubmitError(null);
+		try {
+			const apiData = transformFormToApi(data);
+			const response = await fetch('/api/transactions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(apiData),
+			});
+			const result = await response.json();
+			if (!response.ok) {
+				throw new Error(result.error || 'حدث خطأ في حفظ المعاملة');
+			}
+			reset(); // إعادة تعيين النموذج بعد النجاح
+			onCreated(); // تحديث القائمة الرئيسية
+		} catch (error: any) {
+			setSubmitError(error.message);
+		}
+	};
+
+	// أنماط التصميم (كما هي)
 	const baseTypeBtn =
 		'flex-1 px-3 py-2 rounded-xl text-sm font-bold border transition-all duration-200';
 	const inactiveBtn = 'bg-slate-800/60 text-slate-300 border-white/10 hover:bg-slate-700/90';
@@ -55,30 +80,31 @@ function TransactionForm({ onCreated }: Props) {
 	const activeExpense = 'bg-red-500 text-slate-950 border-red-400 shadow-sm shadow-red-500/20';
 	const activeIncome =
 		'bg-emerald-500 text-slate-950 border-emerald-400 shadow-sm shadow-emerald-500/20';
+
 	return (
-		<form className="flex flex-col gap-4" dir="rtl">
-			<h2 className="text-base font-bold text-shadow-slate-100 mb-1 ">إضافة معاملة جديدة</h2>
+		<form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" dir="rtl">
+			<h2 className="text-base font-bold text-shadow-slate-100 mb-1">إضافة معاملة جديدة</h2>
+
 			{/* أزرار نوع المعاملة */}
 			<div className="flex gap-3">
 				<button
 					type="button"
-					onClick={() => {
-						setValue('type', 'INCOME');
-					}}
+					onClick={() => setValue('type', 'INCOME')}
 					className={`${baseTypeBtn} ${transactionType === 'INCOME' ? activeIncome : inactiveBtn}`}
 				>
 					دخل
 				</button>
 				<button
 					type="button"
-					onClick={() => {
-						setValue('type', 'EXPENSE');
-					}}
-					className={`${baseTypeBtn} ${transactionType === 'EXPENSE' ? activeExpense : inactiveBtn}`}
+					onClick={() => setValue('type', 'EXPENSE')}
+					className={`${baseTypeBtn} ${
+						transactionType === 'EXPENSE' ? activeExpense : inactiveBtn
+					}`}
 				>
 					صرف
 				</button>
 			</div>
+
 			{/* حقل المبلغ */}
 			<div>
 				<input
@@ -86,21 +112,24 @@ function TransactionForm({ onCreated }: Props) {
 					type="text"
 					inputMode="decimal"
 					placeholder="المبلغ (مثال: 150.50)"
-					className={`${inputStyles} ${errors.amount ? 'border-red-500/50 focus:ring-red-500/50' : ''}`}
+					className={`${inputStyles} ${
+						errors.amount ? 'border-red-500/50 focus:ring-red-500/50' : ''
+					}`}
 				/>
 				{errors.amount && (
 					<span className="text-red-400 text-xs mt-1 block">{errors.amount.message}</span>
 				)}
 			</div>
-			{/* حقل التاريخ */}
+
+			{/* حقل التاريخ - استخدمنا valueAsDate لتحويله إلى Date تلقائياً */}
 			<div>
 				<input
-					{...register('date')}
+					{...register('occurredAt', { valueAsDate: true })}
 					type="date"
-					className={`${inputStyles} ${errors.date ? 'border-red-500/50' : ''}`}
+					className={`${inputStyles} ${errors.occurredAt ? 'border-red-500/50' : ''}`}
 				/>
-				{errors.date && (
-					<span className="text-red-400 text-xs mt-1 block">{errors.date.message}</span>
+				{errors.occurredAt && (
+					<span className="text-red-400 text-xs mt-1 block">{errors.occurredAt.message}</span>
 				)}
 			</div>
 
@@ -108,15 +137,20 @@ function TransactionForm({ onCreated }: Props) {
 			<div>
 				<input {...register('description')} className={inputStyles} placeholder="الوصف (اختياري)" />
 			</div>
+
 			{/* قائمة الفئات */}
 			{categories.length > 0 ? (
 				<div>
-					<select {...register('categoryId', { valueAsNumber: true })}>
+					<select
+						{...register('categoryId')}
+						className={`${inputStyles} ${errors.categoryId ? 'border-red-500/50' : ''}`}
+						defaultValue=""
+					>
 						<option value="" disabled>
 							اختر الفئة
 						</option>
 						{categories.map((c) => (
-							<option key={c.id} value={c.id} className="bg-slate-800 text-white">
+							<option key={c.id} value={String(c.id)} className="bg-slate-800 text-white">
 								{c.name}
 							</option>
 						))}
@@ -128,16 +162,16 @@ function TransactionForm({ onCreated }: Props) {
 			) : (
 				<p className="text-xs text-amber-400/90 bg-amber-400/10 p-2 rounded-lg border border-amber-400/20">
 					لا يوجد لديك فئات. يرجى إنشاء فئة من قسم
-					<Link href={`/categories`} className="font-bold text-green-700 hover:opacity-80">
-						{'   '}
-						إدارة الفئات
+					<Link href="/categories" className="font-bold text-green-700 hover:opacity-80">
+						{'   '}إدارة الفئات
 					</Link>
 				</p>
 			)}
+
 			{/* قائمة المحافظ */}
 			<div>
 				<select
-					{...register('walletId', { valueAsNumber: true })}
+					{...register('walletId')}
 					className={`${inputStyles} ${errors.walletId ? 'border-red-500/50' : ''}`}
 					defaultValue=""
 				>
@@ -145,7 +179,7 @@ function TransactionForm({ onCreated }: Props) {
 						اختر المحفظة
 					</option>
 					{wallets.map((w) => (
-						<option key={w.id} value={w.id} className="bg-slate-800 text-white">
+						<option key={w.id} value={String(w.id)} className="bg-slate-800 text-white">
 							{w.name}
 						</option>
 					))}
@@ -154,10 +188,16 @@ function TransactionForm({ onCreated }: Props) {
 					<span className="text-red-400 text-xs mt-1 block">{errors.walletId.message}</span>
 				)}
 			</div>
+
+			{/* عرض أخطاء الإرسال */}
+			{submitError && (
+				<div className="text-red-400 text-sm bg-red-400/10 p-2 rounded-lg">{submitError}</div>
+			)}
+
 			{/* زر الحفظ */}
 			<button
 				type="submit"
-				disabled={isSubmitting || (categories.length > 0 && categories.length === 0)}
+				disabled={isSubmitting || (categories.length === 0 && !catLoading)}
 				className="mt-2 w-full rounded-xl px-4 py-3 text-sm font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98] cursor-pointer"
 			>
 				{isSubmitting ? 'جاري الحفظ...' : 'حفظ المعاملة'}

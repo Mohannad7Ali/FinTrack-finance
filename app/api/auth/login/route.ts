@@ -8,7 +8,7 @@ type LoginResponse =
 	| { ok: true; id: number; name: string; email: string }
 	| { ok: false; error: string };
 
-export async function POST(req: NextRequest, res: NextResponse) {
+export async function POST(req: NextRequest) {
 	try {
 		const body = await req.json();
 		const parsed = loginSchema.safeParse(body);

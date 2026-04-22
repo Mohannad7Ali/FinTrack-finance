@@ -45,7 +45,7 @@ export function LoadingScreen({ isLoading, minDisplayTime = 800 }: LoadingScreen
 				className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
-				exit={{ opacity: 0, transition: { duration: 0.5, ease: 'easeInOut' } }}
+				exit={{ opacity: 0, transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] } }}
 				transition={{ duration: 0.3 }}
 			>
 				{/* خلفية متحركة */}

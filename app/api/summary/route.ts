@@ -33,12 +33,14 @@ export async function GET(req: NextRequest) {
 			prisma.transaction.groupBy({
 				by: ['type'],
 				where: { userId, occurredAt: { gte: start, lt: end } },
+				orderBy: undefined,
 				_sum: { amount: true },
 			}),
 			// QUERY 2: Calculate expense distribution by category (for pie chart)
 			prisma.transaction.groupBy({
 				by: ['categoryId'],
 				where: { userId, type: 'EXPENSE', occurredAt: { gte: start, lt: end } },
+				orderBy: undefined,
 				_sum: { amount: true },
 			}),
 
@@ -60,10 +62,10 @@ export async function GET(req: NextRequest) {
 
 		// Calculate summary statistics
 		const totalIncome = Number(
-			aggregatedAmountsByType.find((a) => a.type === 'INCOME')?._sum.amount || 0
+			(aggregatedAmountsByType ?? []).find((a) => a.type === 'INCOME')?._sum?.amount ?? 0
 		);
 		const totalExpense = Number(
-			aggregatedAmountsByType.find((a) => a.type === 'EXPENSE')?._sum.amount || 0
+			(aggregatedAmountsByType ?? []).find((a) => a.type === 'EXPENSE')?._sum?.amount ?? 0
 		);
 		/**
 		 * Build categories chart data (for pie/bar chart)
@@ -76,7 +78,7 @@ export async function GET(req: NextRequest) {
 			const categoryName = matchedCategory ? matchedCategory.name : 'بدون فئة';
 			return {
 				name: categoryName,
-				value: Number(expenseGroup._sum.amount) || 0,
+				value: Number(expenseGroup?._sum?.amount ?? 0) || 0,
 			};
 		});
 		/**
@@ -87,7 +89,7 @@ export async function GET(req: NextRequest) {
 		const dailyBalanceMap: Record<number, number> = {};
 		recentTransactions.forEach((transaction) => {
 			const day = transaction.occurredAt.getUTCDate(); // Get day of month (1-31)
-			const amount = Number(transaction.amount);
+			const amount = Number(transaction?.amount ?? 0);
 			// Add amount for income, subtract for expense to get net balance
 			const netChange = transaction.type === 'INCOME' ? amount : -amount;
 			dailyBalanceMap[day] = (dailyBalanceMap[day] || 0) + netChange;
@@ -113,7 +115,7 @@ export async function GET(req: NextRequest) {
 			},
 			transaction: recentTransactions.map((tx) => ({
 				...tx,
-				amount: Number(tx.amount), // convert decimal to number for json
+				amount: Number(tx.amount ?? 0), // convert decimal to number for json
 			})),
 		});
 	} catch (e) {

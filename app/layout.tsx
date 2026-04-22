@@ -51,6 +51,12 @@ export const metadata: Metadata = {
 		images: ['https://fintrack.vercel.app/og-image.png'],
 		creator: '@mohannad_ali',
 	},
+	manifest: '/manifest.json',
+	themeColor: '#0f172a',
+	icons: {
+		icon: '/icons/icon-192.png',
+		apple: '/icons/apple-touch-icon.png',
+	},
 };
 
 const cairo = Cairo({

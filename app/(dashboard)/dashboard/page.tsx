@@ -10,6 +10,7 @@ import { useME } from '@/hooks/useMe';
 import { TransactionFormDialog } from '../transactions/components/TransactionFormDialog';
 import { Button } from '@/components/ui/button';
 import DailyLineChart from '../reports/components/DailyTrendChart';
+import { QuickStartGuideModal } from '@/components/dashboard/QuickStartGuideModal';
 
 import {
 	PlusCircle,
@@ -46,6 +47,7 @@ export default function Dashboard() {
 	const [showAddDialog, setShowAddDialog] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [editingTx] = useState<Transaction | null>(null);
+	const [showGuideModal, setShowGuideModal] = useState(false);
 
 	const onSubmit = useCallback(
 		async (values: TransactionFormValues) => {
@@ -139,10 +141,12 @@ export default function Dashboard() {
 						{!hasTransactions && (
 							<Button
 								variant="outline"
-								className="border-white/20 text-white hover:bg-white/10 gap-2"
+								className="group relative overflow-hidden border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200 gap-2 shadow-[0_0_12px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all duration-300"
+								onClick={() => setShowGuideModal(true)}
 							>
-								<Lightbulb className="w-4 h-4" />
-								دليل البدء السريع
+								<Lightbulb className="w-4 h-4 animate-pulse group-hover:animate-bounce" />
+								<span className="relative z-10">دليل البدء السريع</span>
+								<div className="absolute inset-0 -z-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/30 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
 							</Button>
 						)}
 					</div>
@@ -259,6 +263,7 @@ export default function Dashboard() {
 				isSubmitting={isSubmitting}
 				onSubmit={onSubmit}
 			/>
+			<QuickStartGuideModal open={showGuideModal} onOpenChange={setShowGuideModal} />
 		</main>
 	);
 }
