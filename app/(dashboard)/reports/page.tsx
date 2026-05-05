@@ -1,7 +1,7 @@
 // app/(dashboard)/reports/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useReports } from '@/hooks/useReports';
 import MonthYearPicker from './components/MonthYearPicker';
 import SummaryCards from './components/ReportSummaryCards';
@@ -9,8 +9,10 @@ import CategoryPieChart from './components/CategoryPieChart';
 import DailyLineChart from './components/DailyTrendChart';
 import RecentTransactions from './components/RecentTransactionsTable';
 import ExportCSV from './components/ExportButton';
-import { useEffect } from 'react';
-import { DailyData, ReportSummary, ReportTransaction } from '@/types/reports';
+import { AIFinancialAnalysis } from '@/components/AIFinancialAnalysis';
+import { BrainCircuit } from 'lucide-react';
+import type { DailyData, ReportSummary, ReportTransaction } from '@/types/reports';
+
 export default function ReportsPage() {
 	const now = new Date();
 	const [month, setMonth] = useState(now.getMonth() + 1);
@@ -35,7 +37,6 @@ export default function ReportsPage() {
 	}
 
 	const { summary, charts, transactions } = data;
-	console.log('Categories data from API:', data);
 
 	return (
 		<main
@@ -44,7 +45,10 @@ export default function ReportsPage() {
 		>
 			{/* رأس الصفحة مع منتقي الشهر والسنة */}
 			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-				<h1 className="text-xl sm:text-2xl font-bold text-white">التقارير المالية</h1>
+				<h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+					<BrainCircuit className="w-6 h-6 text-emerald-400" />
+					التقارير المالية
+				</h1>
 				<MonthYearPicker
 					month={month}
 					year={year}
@@ -57,6 +61,11 @@ export default function ReportsPage() {
 
 			{/* بطاقات الملخص */}
 			<SummaryCards summary={(summary as ReportSummary) || {}} />
+
+			{/* ************************************** */}
+			{/* تحليل الذكاء الاصطناعي (يأخذ مساحة عرض كاملة) */}
+			{/* ************************************** */}
+			<AIFinancialAnalysis months={6} autoFetch={true} className="mt-2" />
 
 			{/* الرسوم البيانية: تتراص عمودياً على الجوال، وأفقياً على الكبيرة */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

@@ -2,15 +2,16 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import CategoryChart from '@/components/dashboard/CategoryChart';
+// import CategoryChart from '@/components/dashboard/CategoryChart';
 import SummaryCard from '@/components/dashboard/SummaryCard';
 import { TransactionTable } from '@/components/dashboard/TransactionTable';
 import { useSummary } from '@/hooks/useSummary';
 import { useME } from '@/hooks/useMe';
 import { TransactionFormDialog } from '../transactions/components/TransactionFormDialog';
 import { Button } from '@/components/ui/button';
-import DailyLineChart from '../reports/components/DailyTrendChart';
+// import DailyLineChart from '../reports/components/DailyTrendChart';
 import { QuickStartGuideModal } from '@/components/dashboard/QuickStartGuideModal';
+import { AIFinancialAnalysis } from '@/components/AIFinancialAnalysis'; // استيراد المكون
 
 import {
 	PlusCircle,
@@ -153,7 +154,7 @@ export default function Dashboard() {
 				</div>
 			</div>
 
-			{/* بطاقات الملخص مع الأيقونات (الـ SummaryCard معدل يدعم icon) */}
+			{/* بطاقات الملخص */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 				<SummaryCard
 					title="إجمالي الدخل"
@@ -175,8 +176,13 @@ export default function Dashboard() {
 				/>
 			</div>
 
+			{/* ******************* */}
+			{/* تحليل الذكاء الاصطناعي - يظهر بشكل بارز بعد البطاقات */}
+			{/* ******************* */}
+			<AIFinancialAnalysis months={6} autoFetch={true} className="mt-2" />
+
 			{/* الرسوم البيانية */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+			{/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				<div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:p-5">
 					<div className="flex items-center gap-2 mb-3">
 						<BarChart3 className="w-5 h-5 text-emerald-400" />
@@ -206,7 +212,7 @@ export default function Dashboard() {
 						</div>
 					)}
 				</div>
-			</div>
+			</div> */}
 
 			{/* جدول المعاملات */}
 			<div>

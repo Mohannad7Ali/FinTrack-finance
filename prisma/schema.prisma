@@ -90,3 +90,14 @@ model Transaction {
   @@index([categoryId])
   @@index([walletId])
 }
+
+model AiAnalysisCache {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  result    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("ai_analysis_cache")
+}

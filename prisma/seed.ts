@@ -1,8 +1,25 @@
-import { prisma } from '../lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import 'dotenv/config';
+
+const poolConfig = {
+	connectionString: process.env.DATABASE_POOLED_URL,
+	max: 20,
+	idleTimeoutMillis: 30000,
+	connectionTimeoutMillis: 5000,
+};
+
+const pool = new Pool(poolConfig);
+const adapter = new PrismaPg(pool);
+
+//إنشاء PrismaClient مع adapter
+const prisma = new PrismaClient({ adapter });
 
 const defaultCategories = [
 	{ name: 'الراتب', icon: '💰', type: 'INCOME' },
 	{ name: 'مكافأة', icon: '🎁', type: 'INCOME' },
+	{ name: 'دخل خاص', icon: '📈', type: 'INCOME' },
 	{ name: 'طعام ومشروبات', icon: '🍔', type: 'EXPENSE' },
 	{ name: 'مواصلات', icon: '🚗', type: 'EXPENSE' },
 	{ name: 'إيجار', icon: '🏠', type: 'EXPENSE' },
@@ -16,23 +33,16 @@ const defaultCategories = [
 ];
 
 async function main() {
-	// إضافة الفئات العامة (بدون userId)
+	console.log('Seeding process start  ....');
+
 	for (const cat of defaultCategories) {
-		// await prisma.category.upsert({
-		// 	where: { userId_name: { userId: 0, name: cat.name } },
-		// 	update: {},
-		// 	create: {
-		// 		name: cat.name,
-		// 		icon: cat.icon,
-		// 		isDefault: true,
-		// 	},
-		// });
 		const existing = await prisma.category.findFirst({
 			where: {
 				name: cat.name,
 				userId: null,
 			},
 		});
+
 		if (!existing) {
 			await prisma.category.create({
 				data: {
@@ -42,11 +52,20 @@ async function main() {
 					userId: null,
 				},
 			});
+			console.log(`✅ category created successfully: ${cat.name}`);
+		} else {
+			console.log(`⏭️ category already exists: ${cat.name}`);
 		}
 	}
-	console.log('✅ Default categories seeded');
+
+	console.log('seeding successfully');
 }
 
 main()
-	.catch((e) => console.error(e))
-	.finally(() => prisma.$disconnect());
+	.catch((e) => {
+		console.error('seeding failed', e);
+		process.exit(1);
+	})
+	.finally(async () => {
+		await prisma.$disconnect();
+	});
