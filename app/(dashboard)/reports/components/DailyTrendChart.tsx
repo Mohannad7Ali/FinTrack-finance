@@ -2,7 +2,7 @@
 'use client';
 
 import {
-	LineChart,
+	ComposedChart,
 	Line,
 	XAxis,
 	YAxis,
@@ -11,15 +11,17 @@ import {
 	ResponsiveContainer,
 	ReferenceLine,
 	Area,
-	ComposedChart,
 } from 'recharts';
 import { DailyData } from '@/types/reports';
 
 export default function DailyLineChart({ data }: { data: DailyData[] }) {
 	if (!data || data.length === 0) {
 		return (
-			<div className="rounded-xl border border-white/20 bg-white/5 p-4 h-72 sm:h-80 flex items-center justify-center">
-				<p className="text-slate-400 text-sm">لا توجد بيانات يومية كافية</p>
+			<div className="rounded-2xl border border-slate-700/40 bg-gradient-to-br from-slate-900/60 to-slate-800/60 backdrop-blur-xl p-8 h-80 flex items-center justify-center shadow-2xl">
+				<div className="text-center space-y-2">
+					<span className="text-3xl opacity-30">📈</span>
+					<p className="text-slate-400 text-sm">لا توجد بيانات يومية كافية</p>
+				</div>
 			</div>
 		);
 	}
@@ -31,85 +33,127 @@ export default function DailyLineChart({ data }: { data: DailyData[] }) {
 		filled.push({ day, value: existing ? existing.value : 0 });
 	}
 
-	// Find max value for better Y axis domain
 	const maxValue = Math.max(...filled.map((d) => Math.abs(d.value)), 100);
 	const minValue = Math.min(...filled.map((d) => d.value), 0);
 	const yDomain = [minValue - (maxValue - minValue) * 0.1, maxValue + (maxValue - minValue) * 0.1];
 
+	const activeDays = filled.filter((d) => d.value !== 0).length;
+	const highest = Math.max(...filled.map((d) => d.value));
+	const lowest = Math.min(...filled.map((d) => d.value));
+
 	return (
-		<div className="rounded-xl border border-white/20 bg-gradient-to-br from-slate-800/30 to-slate-900/30 backdrop-blur-sm p-4 transition-all hover:shadow-lg">
-			<div className="flex justify-between items-center mb-3">
-				<h3 className="text-base sm:text-lg font-semibold text-white">📈 الاتجاه اليومي</h3>
-				<div className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">
+		<div className="rounded-2xl border border-slate-700/40 bg-gradient-to-br from-slate-900/70 to-slate-800/70 backdrop-blur-xl p-6 sm:p-8 transition-all duration-500 hover:shadow-2xl hover:border-slate-600/60 group">
+			{/* Header */}
+			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
+				<h3 className="text-xl font-bold text-white flex items-center gap-3">
+					<span className="text-2xl bg-white/10 p-1.5 rounded-xl backdrop-blur">📈</span>
+					الاتجاه اليومي
+				</h3>
+				<span className="text-xs font-medium text-emerald-300 bg-emerald-500/15 px-3 py-1 rounded-full border border-emerald-500/20">
 					صافي الدخل - المصروفات
-				</div>
+				</span>
 			</div>
+
 			<ResponsiveContainer width="100%" height={300}>
-				<ComposedChart data={filled} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+				<ComposedChart data={filled} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
 					<defs>
-						<linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-							<stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-							<stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+						<linearGradient id="dailyGradient" x1="0" y1="0" x2="0" y2="1">
+							<stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
+							<stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
 						</linearGradient>
 					</defs>
-					<CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+					<CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
 					<XAxis
 						dataKey="day"
 						tick={{ fill: '#94a3b8', fontSize: 12 }}
+						tickLine={false}
+						axisLine={{ stroke: 'rgba(148,163,184,0.2)' }}
 						label={{
 							value: 'اليوم',
 							position: 'insideBottom',
-							offset: -5,
-							fill: '#94a3b8',
+							offset: -8,
+							fill: '#64748b',
 							fontSize: 11,
 						}}
 					/>
 					<YAxis
 						tick={{ fill: '#94a3b8', fontSize: 12 }}
 						tickFormatter={(v) => v.toLocaleString()}
+						tickLine={false}
+						axisLine={false}
 						domain={yDomain}
 						label={{
 							value: 'القيمة (SYP)',
 							angle: -90,
 							position: 'insideLeft',
-							fill: '#94a3b8',
+							offset: 0,
+							fill: '#64748b',
 							fontSize: 11,
 						}}
 					/>
 					<Tooltip
 						formatter={(value: any) => {
-							// Safe handling for any value type
 							const num = typeof value === 'number' ? value : Number(value);
 							if (isNaN(num)) return ['0 SYP', 'الصافي'];
 							return [`${num.toLocaleString()} SYP`, 'الصافي'];
 						}}
 						labelFormatter={(label) => `اليوم ${label}`}
 						contentStyle={{
-							backgroundColor: '#1e293b',
-							border: '1px solid #334155',
-							borderRadius: '12px',
-							padding: '8px 12px',
-							color: '#f1f5f9',
+							backgroundColor: 'rgba(15,23,42,0.95)',
+							border: '1px solid rgba(16,185,129,0.4)',
+							borderRadius: '14px',
+							padding: '10px 14px',
+							backdropFilter: 'blur(12px)',
 							direction: 'rtl',
+							boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
 						}}
-						itemStyle={{ color: '#10b981' }}
+						itemStyle={{ color: '#6ee7b7' }}
+						labelStyle={{ color: '#e2e8f0', fontWeight: 600, marginBottom: 4 }}
 					/>
-					<ReferenceLine y={0} stroke="#ef4444" strokeDasharray="4 4" strokeWidth={1.5} />
-					<Area type="monotone" dataKey="value" stroke="none" fill="url(#colorValue)" />
+					<ReferenceLine
+						y={0}
+						stroke="#ef4444"
+						strokeOpacity={0.6}
+						strokeDasharray="5 5"
+						strokeWidth={1.5}
+					/>
+					<Area type="monotone" dataKey="value" stroke="none" fill="url(#dailyGradient)" />
 					<Line
 						type="monotone"
 						dataKey="value"
 						stroke="#10b981"
 						strokeWidth={2.5}
-						dot={{ r: 2, fill: '#10b981', stroke: '#fff', strokeWidth: 1 }}
-						activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }}
+						dot={false}
+						activeDot={{
+							r: 6,
+							fill: '#10b981',
+							stroke: '#fff',
+							strokeWidth: 3,
+						}}
 					/>
 				</ComposedChart>
 			</ResponsiveContainer>
-			<div className="flex justify-between text-xs text-slate-400 mt-3 pt-2 border-t border-white/10">
-				<span>📊 إجمالي الأيام المعروضة: {filled.filter((d) => d.value !== 0).length}</span>
-				<span>💰 أعلى قيمة: {Math.max(...filled.map((d) => d.value)).toLocaleString()} SYP</span>
-				<span>📉 أقل قيمة: {Math.min(...filled.map((d) => d.value)).toLocaleString()} SYP</span>
+
+			{/* Stats bar */}
+			<div className="mt-5 pt-4 border-t border-slate-700/50 flex flex-wrap items-center justify-between gap-3">
+				<div className="flex items-center gap-2 text-xs text-slate-400">
+					<span className="w-2 h-2 rounded-full bg-emerald-400" />
+					<span>أيام النشاط: {activeDays}</span>
+				</div>
+				<div className="flex items-center gap-4">
+					<div className="flex items-center gap-1.5 text-xs">
+						<span className="text-emerald-400 font-semibold text-sm">
+							{highest.toLocaleString()} SYP
+						</span>
+						<span className="text-slate-500">أعلى</span>
+					</div>
+					<div className="flex items-center gap-1.5 text-xs">
+						<span className="text-red-400 font-semibold text-sm">
+							{lowest.toLocaleString()} SYP
+						</span>
+						<span className="text-slate-500">أدنى</span>
+					</div>
+				</div>
 			</div>
 		</div>
 	);
