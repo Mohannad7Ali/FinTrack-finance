@@ -12,11 +12,5 @@
 	],
 	"buildCommand": "npm run build",
 	"installCommand": "npm install",
-	"outputDirectory": ".next",
-	"build": {
-		"env": {
-			"DATABASE_URL": "@database_url",
-			"DATABASE_POOLED_URL": "@database_pooled_url"
-		}
-	}
+	"outputDirectory": ".next"
 }
