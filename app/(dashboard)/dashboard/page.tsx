@@ -1,32 +1,22 @@
-// app/(dashboard)/dashboard/page.tsx
 'use client';
 
 import { useCallback, useState } from 'react';
-// import CategoryChart from '@/components/dashboard/CategoryChart';
 import SummaryCard from '@/components/dashboard/SummaryCard';
 import { TransactionTable } from '@/components/dashboard/TransactionTable';
 import { useSummary } from '@/hooks/useSummary';
 import { useME } from '@/hooks/useMe';
 import { TransactionFormDialog } from '../transactions/components/TransactionFormDialog';
 import { Button } from '@/components/ui/button';
-// import DailyLineChart from '../reports/components/DailyTrendChart';
 import { QuickStartGuideModal } from '@/components/dashboard/QuickStartGuideModal';
-import { AIFinancialAnalysis } from '@/components/AIFinancialAnalysis'; // استيراد المكون
-
-import {
-	PlusCircle,
-	TrendingUp,
-	TrendingDown,
-	Wallet,
-	Sparkles,
-	BarChart3,
-	CalendarDays,
-	Lightbulb,
-} from 'lucide-react';
+import { AIFinancialAnalysis } from '@/components/AIFinancialAnalysis';
+import { PlusCircle, TrendingUp, TrendingDown, Wallet, Sparkles, Lightbulb } from 'lucide-react';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/fetcher';
 import type { Category, Wallet as WalletType, Transaction } from '@/types/transactions';
 import type { TransactionFormValues } from '@/lib/validators';
+// في أعلى صفحة dashboard/page.tsx
+import { LoadingScreen } from '@/components/common/DashboardLoadingScreen';
+import { ErrorScreen } from '@/components/common/DashboardErrorScreen';
 
 export default function Dashboard() {
 	const today = new Date();
@@ -49,6 +39,9 @@ export default function Dashboard() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [editingTx] = useState<Transaction | null>(null);
 	const [showGuideModal, setShowGuideModal] = useState(false);
+
+	// العملة المفضلة من الـ API
+	const preferredCurrency = userData?.preferredCurrency || 'SYP';
 
 	const onSubmit = useCallback(
 		async (values: TransactionFormValues) => {
@@ -105,9 +98,10 @@ export default function Dashboard() {
 		summary: { income: 0, expense: 0, balance: 0 },
 		charts: { categories: [], daily: [] },
 		transaction: [],
+		preferredCurrency: 'SYP',
 	};
 
-	const { summary, charts, transaction: transactions } = safeData;
+	const { summary, transaction: transactions } = safeData;
 	const hasTransactions = transactions?.length > 0;
 	const userName = userData?.ok && userData.authenticated ? userData.name : 'مستخدم';
 	const currentMonthName = today.toLocaleDateString('ar', { month: 'long', year: 'numeric' });
@@ -128,8 +122,8 @@ export default function Dashboard() {
 					<h1 className="text-2xl md:text-3xl font-bold text-white">مرحباً، {userName} 👋</h1>
 					<p className="text-slate-300 text-sm md:text-base mt-2 max-w-2xl">
 						نظرة عامة على أدائك المالي لشهر{' '}
-						<span className="text-emerald-400 font-semibold">{currentMonthName}</span>. تابع دخلك،
-						مصروفاتك، ورصيدك في مكان واحد.
+						<span className="text-emerald-400 font-semibold">{currentMonthName}</span>. جميع الأرقام
+						بالعملة المفضلة لديك: <strong>{preferredCurrency}</strong>
 					</p>
 					<div className="flex flex-wrap gap-3 mt-4">
 						<Button
@@ -142,77 +136,44 @@ export default function Dashboard() {
 						{!hasTransactions && (
 							<Button
 								variant="outline"
-								className="group relative overflow-hidden border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200 gap-2 shadow-[0_0_12px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all duration-300"
+								className="group relative overflow-hidden border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 gap-2"
 								onClick={() => setShowGuideModal(true)}
 							>
-								<Lightbulb className="w-4 h-4 animate-pulse group-hover:animate-bounce" />
-								<span className="relative z-10">دليل البدء السريع</span>
-								<div className="absolute inset-0 -z-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/30 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+								<Lightbulb className="w-4 h-4" />
+								دليل البدء السريع
 							</Button>
 						)}
 					</div>
 				</div>
 			</div>
 
-			{/* بطاقات الملخص */}
+			{/* بطاقات الملخص مع العملة */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 				<SummaryCard
 					title="إجمالي الدخل"
 					value={summary.income}
+					currency={preferredCurrency}
 					color="emerald"
 					icon={<TrendingUp className="w-5 h-5" />}
 				/>
 				<SummaryCard
 					title="إجمالي المصروفات"
 					value={summary.expense}
+					currency={preferredCurrency}
 					color="red"
 					icon={<TrendingDown className="w-5 h-5" />}
 				/>
 				<SummaryCard
 					title="صافي الرصيد"
 					value={summary.balance}
+					currency={preferredCurrency}
 					color={summary.balance >= 0 ? 'emerald' : 'red'}
 					icon={<Wallet className="w-5 h-5" />}
 				/>
 			</div>
 
-			{/* ******************* */}
-			{/* تحليل الذكاء الاصطناعي - يظهر بشكل بارز بعد البطاقات */}
-			{/* ******************* */}
+			{/* تحليل الذكاء الاصطناعي */}
 			<AIFinancialAnalysis months={6} autoFetch={true} className="mt-2" />
-
-			{/* الرسوم البيانية */}
-			{/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				<div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:p-5">
-					<div className="flex items-center gap-2 mb-3">
-						<BarChart3 className="w-5 h-5 text-emerald-400" />
-						<h2 className="text-base font-semibold text-white">توزيع المصروفات حسب الفئة</h2>
-					</div>
-					{charts.categories?.length > 0 ? (
-						<CategoryChart data={charts.categories} />
-					) : (
-						<div className="text-center py-8 text-slate-400 text-sm">
-							لا توجد مصروفات مسجلة هذا الشهر.
-						</div>
-					)}
-				</div>
-
-				<div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:p-5">
-					<div className="flex items-center gap-2 mb-3">
-						<CalendarDays className="w-5 h-5 text-emerald-400" />
-						<h2 className="text-base font-semibold text-white">
-							الاتجاه اليومي (صافي الدخل - المصروفات)
-						</h2>
-					</div>
-					{charts.daily && charts.daily.length > 0 ? (
-						<DailyLineChart data={charts.daily} />
-					) : (
-						<div className="h-64 flex items-center justify-center text-slate-400 text-sm">
-							لا توجد بيانات يومية كافية
-						</div>
-					)}
-				</div>
-			</div> */}
 
 			{/* جدول المعاملات */}
 			<div>
@@ -225,11 +186,15 @@ export default function Dashboard() {
 					)}
 				</div>
 				<div className="rounded-xl border border-white/10 bg-white/5 p-4">
-					<TransactionTable transactions={transactions || []} onDelete={handleDeleteTransaction} />
+					<TransactionTable
+						transactions={transactions || []}
+						onDelete={handleDeleteTransaction}
+						currency={preferredCurrency}
+					/>
 				</div>
 			</div>
 
-			{/* دليل البدء للمستخدم الجديد */}
+			{/* دليل البدء */}
 			{!hasTransactions && (
 				<div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-950/20 to-slate-900/50 p-5">
 					<h3 className="text-md font-semibold text-white mb-2 flex items-center gap-2">
@@ -274,22 +239,4 @@ export default function Dashboard() {
 	);
 }
 
-function LoadingScreen() {
-	return (
-		<div className="flex flex-col items-center justify-center min-h-screen gap-3">
-			<div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-			<p className="text-slate-300 text-sm">جاري التحميل...</p>
-		</div>
-	);
-}
-
-function ErrorScreen({ message }: { message: string }) {
-	return (
-		<div className="flex flex-col items-center justify-center min-h-screen gap-2 text-red-400 text-center p-4">
-			<p>{message}</p>
-			<Button variant="outline" onClick={() => window.location.reload()}>
-				إعادة المحاولة
-			</Button>
-		</div>
-	);
-}
+// دوال مساعدة (LoadingScreen, ErrorScreen) كما هي موجودة لديك

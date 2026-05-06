@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { transactionApiSchema } from '@/lib/validators';
 import { getUserId } from '@/lib/utils/getUserId';
 
+// -------------------- GET: Fetch transactions --------------------
 export async function GET(req: NextRequest) {
 	const userId = await getUserId(req);
 	if (!userId || userId < 0) {
@@ -18,6 +19,7 @@ export async function GET(req: NextRequest) {
 		const month = url.searchParams.get('month');
 		const year = url.searchParams.get('year');
 		const where: any = { userId };
+
 		if (month && year) {
 			const m = parseInt(month);
 			const y = parseInt(year);
@@ -29,6 +31,7 @@ export async function GET(req: NextRequest) {
 				lt: new Date(Date.UTC(y, m, 1)),
 			};
 		}
+
 		const transactions = await prisma.transaction.findMany({
 			where,
 			include: {
@@ -37,6 +40,7 @@ export async function GET(req: NextRequest) {
 			},
 			orderBy: { occurredAt: 'desc' },
 		});
+
 		return NextResponse.json({ ok: true, transactions });
 	} catch (error) {
 		console.error('[TRANSACTIONS_GET_ERROR]', error);
@@ -44,6 +48,7 @@ export async function GET(req: NextRequest) {
 	}
 }
 
+// -------------------- POST: Create transaction --------------------
 export async function POST(req: NextRequest) {
 	const userId = await getUserId(req);
 	if (!userId || userId < 0) {
@@ -61,9 +66,10 @@ export async function POST(req: NextRequest) {
 				{ status: 400 }
 			);
 		}
+
 		const { type, amount, occurredAt, description, categoryId, walletId } = parsed.data;
 
-		// التحقق من المحفظة
+		// Verify wallet ownership
 		const wallet = await prisma.wallet.findFirst({
 			where: { id: walletId, userId },
 		});
@@ -73,24 +79,20 @@ export async function POST(req: NextRequest) {
 				{ status: 404 }
 			);
 		}
-		// التحقق من الفئة
+
+		// Verify category (if provided) – user's own or default (userId = null)
 		if (categoryId) {
 			const category = await prisma.category.findFirst({
 				where: { id: categoryId, OR: [{ userId }, { userId: null }] },
 			});
-			if (!category)
+			if (!category) {
 				return NextResponse.json({ ok: false, error: 'الفئة غير صالحة' }, { status: 400 });
+			}
 		}
 
+		// --- Allow expense even if wallet goes negative (no balance check) ---
 		const result = await prisma.$transaction(async (trx) => {
-			if (type === 'EXPENSE') {
-				const currentWallet = await trx.wallet.findFirst({
-					where: { id: walletId, userId },
-				});
-				if (currentWallet && Number(currentWallet.balance) < amount) {
-					throw new Error('INSUFFICIENT_BALANCE');
-				}
-			}
+			// Create transaction
 			const newTransaction = await trx.transaction.create({
 				data: {
 					type,
@@ -102,22 +104,19 @@ export async function POST(req: NextRequest) {
 					userId,
 				},
 			});
+
+			// Update wallet balance (can become negative for expenses)
 			const balanceChange = type === 'INCOME' ? amount : -amount;
 			await trx.wallet.update({
 				where: { id: walletId },
 				data: { balance: { increment: balanceChange } },
 			});
+
 			return newTransaction;
 		});
 
 		return NextResponse.json({ ok: true, transaction: result });
 	} catch (error: any) {
-		if (error.message === 'INSUFFICIENT_BALANCE') {
-			return NextResponse.json(
-				{ ok: false, error: 'رصيد المحفظة غير كافي لصرف هذا المبلغ' },
-				{ status: 400 }
-			);
-		}
 		console.error('[TRANSACTION_POST_ERROR]', error);
 		return NextResponse.json({ ok: false, error: 'فشلت عملية إنشاء المعاملة' }, { status: 500 });
 	}

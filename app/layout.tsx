@@ -52,7 +52,7 @@ export const metadata: Metadata = {
 		creator: '@mohannad_ali',
 	},
 	manifest: '/manifest.json',
-	themeColor: '#0f172a',
+	// themeColor: '#0f172a',
 	icons: {
 		icon: '/icons/icon-192.png',
 		apple: '/icons/apple-touch-icon.png',

@@ -1,4 +1,3 @@
-// app/(dashboard)/reports/components/CategoryPieChart.tsx
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -19,9 +18,22 @@ const COLORS = [
 	'#14b8a6',
 ];
 
-// Custom active shape that expands on hover (animated segment)
+// Custom active shape that expands on hover (animated segment) – with safe coordinate handling
 const ActiveShape = (props: any) => {
 	const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
+
+	// Guard against invalid coordinates
+	if (typeof cx !== 'number' || typeof cy !== 'number' || isNaN(cx) || isNaN(cy)) {
+		return null;
+	}
+
+	// Calculate angle for the floating label
+	const midAngle = (-startAngle + -endAngle) / 2;
+	const angleRad = (midAngle * Math.PI) / 180;
+	const radius = (outerRadius || 0) + 20;
+	const labelX = cx + radius * Math.cos(angleRad);
+	const labelY = cy + radius * Math.sin(angleRad);
+	const isValidLabelPosition = !isNaN(labelX) && !isNaN(labelY);
 
 	return (
 		<g>
@@ -35,18 +47,20 @@ const ActiveShape = (props: any) => {
 				fill={fill}
 				style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))' }}
 			/>
-			{/* Small indicator label */}
-			<text
-				x={cx + (outerRadius + 20) * Math.cos((((-startAngle + -endAngle) / 2) * Math.PI) / 180)}
-				y={cy + (outerRadius + 20) * Math.sin((((-startAngle + -endAngle) / 2) * Math.PI) / 180)}
-				textAnchor="middle"
-				dominantBaseline="central"
-				fill="#e2e8f0"
-				fontSize={13}
-				fontWeight={600}
-			>
-				{`${payload.name} ${(percent * 100).toFixed(0)}%`}
-			</text>
+			{/* Small indicator label – only if position is valid */}
+			{isValidLabelPosition && (
+				<text
+					x={labelX}
+					y={labelY}
+					textAnchor="middle"
+					dominantBaseline="central"
+					fill="#e2e8f0"
+					fontSize={13}
+					fontWeight={600}
+				>
+					{`${payload.name} ${(percent * 100).toFixed(0)}%`}
+				</text>
+			)}
 		</g>
 	);
 };
@@ -113,7 +127,7 @@ export default function CategoryPieChart({ data }: CategoryPieChartProps) {
 								activeShape={ActiveShape}
 								onMouseEnter={(_, idx) => setActiveIndex(idx)}
 								onMouseLeave={() => setActiveIndex(undefined)}
-								label={false} // we'll show info via tooltip and legend
+								label={false}
 								labelLine={false}
 							>
 								{data.map((_, idx) => (
@@ -129,6 +143,15 @@ export default function CategoryPieChart({ data }: CategoryPieChartProps) {
 									content={({ viewBox }) => {
 										if (!viewBox) return null;
 										const { cx, cy } = viewBox as { cx: number; cy: number };
+										// Guard against NaN or undefined
+										if (
+											typeof cx !== 'number' ||
+											typeof cy !== 'number' ||
+											isNaN(cx) ||
+											isNaN(cy)
+										) {
+											return null;
+										}
 										return (
 											<g>
 												<circle

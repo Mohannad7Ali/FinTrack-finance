@@ -15,6 +15,7 @@ import {
 import { DailyData } from '@/types/reports';
 
 export default function DailyLineChart({ data }: { data: DailyData[] }) {
+	// Guard against missing or empty data
 	if (!data || data.length === 0) {
 		return (
 			<div className="rounded-2xl border border-slate-700/40 bg-gradient-to-br from-slate-900/60 to-slate-800/60 backdrop-blur-xl p-8 h-80 flex items-center justify-center shadow-2xl">
@@ -26,20 +27,41 @@ export default function DailyLineChart({ data }: { data: DailyData[] }) {
 		);
 	}
 
-	// Fill missing days with zero
+	// Normalize and validate data: ensure each value is a number, default to 0
+	const validatedData = data.map((item) => ({
+		day: item.day,
+		value: typeof item.value === 'number' && !isNaN(item.value) ? item.value : 0,
+	}));
+
+	// Fill missing days 1–31 with zero (or existing value)
 	const filled: DailyData[] = [];
 	for (let day = 1; day <= 31; day++) {
-		const existing = data.find((d) => d.day === day);
+		const existing = validatedData.find((d) => d.day === day);
 		filled.push({ day, value: existing ? existing.value : 0 });
 	}
 
-	const maxValue = Math.max(...filled.map((d) => Math.abs(d.value)), 100);
-	const minValue = Math.min(...filled.map((d) => d.value), 0);
-	const yDomain = [minValue - (maxValue - minValue) * 0.1, maxValue + (maxValue - minValue) * 0.1];
+	// Calculate min/max safely
+	const values = filled.map((d) => d.value);
+	const maxValue = values.length ? Math.max(...values, 0) : 0;
+	const minValue = values.length ? Math.min(...values, 0) : 0;
+
+	// If all values are zero, provide a sensible default domain
+	let yDomain: [number, number];
+	if (maxValue === 0 && minValue === 0) {
+		yDomain = [-10, 10]; // neutral domain to show the zero line
+	} else {
+		const padding = (maxValue - minValue) * 0.1 || 1; // avoid zero padding
+		yDomain = [minValue - padding, maxValue + padding];
+	}
+
+	// Ensure domain numbers are finite
+	if (isNaN(yDomain[0]) || isNaN(yDomain[1])) {
+		yDomain = [-100, 100];
+	}
 
 	const activeDays = filled.filter((d) => d.value !== 0).length;
-	const highest = Math.max(...filled.map((d) => d.value));
-	const lowest = Math.min(...filled.map((d) => d.value));
+	const highest = Math.max(...values, 0);
+	const lowest = Math.min(...values, 0);
 
 	return (
 		<div className="rounded-2xl border border-slate-700/40 bg-gradient-to-br from-slate-900/70 to-slate-800/70 backdrop-blur-xl p-6 sm:p-8 transition-all duration-500 hover:shadow-2xl hover:border-slate-600/60 group">

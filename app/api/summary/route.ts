@@ -1,125 +1,177 @@
+// app/api/summary/route.ts
 export const runtime = 'nodejs';
-import { verifyJwt } from '@/lib/auth/utils';
-import { NextResponse, NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getUserId } from '@/lib/utils/getUserId';
 import { prisma } from '@/lib/prisma';
+import fs from 'fs/promises';
+import path from 'path';
+
+// ========== دوال تحميل أسعار الصرف (نفس باقي الـ APIs) ==========
+interface ExchangeRatesCache {
+	rates: Record<string, number>;
+	base: string;
+	date: string;
+	timestamp: number;
+}
+
+let cachedRates: ExchangeRatesCache | null = null;
+let lastReadTime = 0;
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+async function loadExchangeRates(): Promise<ExchangeRatesCache> {
+	const now = Date.now();
+	if (cachedRates && now - lastReadTime < CACHE_TTL_MS) return cachedRates;
+	try {
+		const filePath = path.join(process.cwd(), '.exchange-rates-cache.json');
+		const content = await fs.readFile(filePath, 'utf-8');
+		const data = JSON.parse(content);
+		cachedRates = data;
+		lastReadTime = now;
+		return data;
+	} catch (error) {
+		console.error('[SUMMARY_API] Rates file error, using fallback');
+		return {
+			rates: { USD: 1, SYP: 13000, EUR: 0.92, GBP: 0.79, TRY: 32, AED: 3.67, SAR: 3.75 },
+			base: 'USD',
+			date: new Date().toISOString(),
+			timestamp: Date.now(),
+		};
+	}
+}
+
+function convertAmount(
+	amount: number,
+	sourceCurrency: string,
+	targetCurrency: string,
+	rates: Record<string, number>
+): number {
+	if (sourceCurrency === targetCurrency) return amount;
+	const sourceRate = rates[sourceCurrency];
+	const targetRate = rates[targetCurrency];
+	if (!sourceRate || !targetRate) return amount;
+	const inBase = amount / sourceRate;
+	return inBase * targetRate;
+}
+
+// ========== API Handler ==========
 export async function GET(req: NextRequest) {
 	try {
 		const userId = await getUserId(req);
 		if (!userId) {
-			return NextResponse.json({ ok: false, error: 'غيرمصرح لك بالدخول' }, { status: 401 });
+			return NextResponse.json({ ok: false, error: 'غير مصرح به' }, { status: 401 });
 		}
+
+		// 1. العملة المفضلة للمستخدم
+		const user = await prisma.user.findUnique({
+			where: { id: userId },
+			select: { preferredCurrency: true },
+		});
+		const targetCurrency = user?.preferredCurrency || 'SYP';
+
+		// 2. معاملات الشهر
 		const { searchParams } = new URL(req.url);
-		const month = parseInt(searchParams.get('month') || new Date(Date.now()).getMonth().toString());
-		const year = parseInt(
-			searchParams.get('year') || new Date(Date.now()).getFullYear().toString()
-		);
-		if (isNaN(month) || isNaN(year) || month < 1 || month > 12 || year < 1900) {
-			return NextResponse.json({ ok: false, error: 'التاريخ المرسل غير صالح' }, { status: 400 });
+		let month = parseInt(searchParams.get('month') || '');
+		let year = parseInt(searchParams.get('year') || '');
+		const now = new Date();
+		if (isNaN(month)) month = now.getMonth() + 1;
+		if (isNaN(year)) year = now.getFullYear();
+		if (month < 1 || month > 12 || year < 1900) {
+			return NextResponse.json({ ok: false, error: 'تاريخ غير صالح' }, { status: 400 });
 		}
+
 		const start = new Date(Date.UTC(year, month - 1, 1));
 		const end = new Date(Date.UTC(year, month, 1));
-		/**
-		 * PERFORMANCE OPTIMIZATION: Use Prisma Transaction to run 4 queries in parallel
-		 * This reduces database round trips from 4 to 1, significantly improving response time
-		 */
-		const [
-			aggregatedAmountsByType, // Result 1: Total income/expense amounts grouped by type
-			aggregatedExpensesByCategory, // Result 2: Expense totals grouped by category ID
-			recentTransactions, // Result 3: Individual transactions with category info
-			userCategories, // Result 4: All user categories for name lookup
-		] = await prisma.$transaction([
-			// QUERY 1: Calculate total income and expense for the month
-			prisma.transaction.groupBy({
-				by: ['type'],
-				where: { userId, occurredAt: { gte: start, lt: end } },
-				orderBy: undefined,
-				_sum: { amount: true },
-			}),
-			// QUERY 2: Calculate expense distribution by category (for pie chart)
-			prisma.transaction.groupBy({
-				by: ['categoryId'],
-				where: { userId, type: 'EXPENSE', occurredAt: { gte: start, lt: end } },
-				orderBy: undefined,
-				_sum: { amount: true },
-			}),
 
-			// QUERY 3: Get recent transactions for the transactions list
-			// Includes category details (name, id) for display
-			prisma.transaction.findMany({
-				where: { userId, occurredAt: { gte: start, lt: end } },
-				include: { category: { select: { id: true, name: true } } },
-				orderBy: { occurredAt: 'desc' }, //latest first best for ui
-				take: 500, // security check to ensure page not crash
-			}),
-			// QUERY 4: Get all user categories to map category IDs to names
-			// Needed because groupBy queries don't support 'include' for relations
-			prisma.category.findMany({
-				select: { id: true, name: true },
-			}),
-		]);
-		// PROCESS DATA FOR RESPONSE
+		// 3. جلب جميع المعاملات مع المحافظ (للعملة)
+		const allTransactions = await prisma.transaction.findMany({
+			where: { userId, occurredAt: { gte: start, lt: end } },
+			include: {
+				category: { select: { id: true, name: true } },
+				wallet: { select: { id: true, name: true, currency: true } },
+			},
+			orderBy: { occurredAt: 'desc' },
+			take: 500, // حد أمان
+		});
 
-		// Calculate summary statistics
-		const totalIncome = Number(
-			(aggregatedAmountsByType ?? []).find((a) => a.type === 'INCOME')?._sum?.amount ?? 0
-		);
-		const totalExpense = Number(
-			(aggregatedAmountsByType ?? []).find((a) => a.type === 'EXPENSE')?._sum?.amount ?? 0
-		);
-		/**
-		 * Build categories chart data (for pie/bar chart)
-		 * Challenge: aggregatedExpensesByCategory has categoryId but no category name
-		 * Solution: Join with userCategories to get names
-		 */
-		const categoriesChartData = aggregatedExpensesByCategory.map((expenseGroup) => {
-			// Find the category name by matching ID
-			const matchedCategory = userCategories.find((cat) => cat.id === expenseGroup.categoryId);
-			const categoryName = matchedCategory ? matchedCategory.name : 'بدون فئة';
-			return {
-				name: categoryName,
-				value: Number(expenseGroup?._sum?.amount ?? 0) || 0,
-			};
+		if (allTransactions.length === 0) {
+			return NextResponse.json({
+				ok: true,
+				summary: { income: 0, expense: 0, balance: 0 },
+				charts: { categories: [], daily: [] },
+				transaction: [], // مفرد كما تنتظره الصفحة
+				preferredCurrency: targetCurrency,
+			});
+		}
+
+		// 4. تحميل الأسعار
+		const { rates } = await loadExchangeRates();
+
+		// 5. تحويل المبالغ إلى العملة المفضلة
+		const converted = allTransactions.map((tx) => {
+			const sourceCurr = tx.wallet?.currency || 'SYP';
+			const original = Number(tx.amount);
+			const convertedAmount = convertAmount(original, sourceCurr, targetCurrency, rates);
+			return { ...tx, convertedAmount };
 		});
-		/**
-		 * Build daily balance chart data (for line/area chart)
-		 * Calculate net balance (income - expense) for each day of the month
-		 * balance = sum of (income - expense) for each day
-		 */
-		const dailyBalanceMap: Record<number, number> = {};
-		recentTransactions.forEach((transaction) => {
-			const day = transaction.occurredAt.getUTCDate(); // Get day of month (1-31)
-			const amount = Number(transaction?.amount ?? 0);
-			// Add amount for income, subtract for expense to get net balance
-			const netChange = transaction.type === 'INCOME' ? amount : -amount;
-			dailyBalanceMap[day] = (dailyBalanceMap[day] || 0) + netChange;
-		});
-		// Convert map to array format suitable for charts
-		const dailyChartData = Object.entries(dailyBalanceMap)
-			.map(([day, amount]) => ({
-				day: parseInt(day),
-				value: amount,
-			}))
-			.sort((a, b) => a.day - b.day); // Sort by day ascending for correct chart display
-		//return complete dashboard data
+
+		// 6. تجميع البيانات
+		let totalIncome = 0,
+			totalExpense = 0;
+		const expenseByCategory = new Map<string, number>();
+		const dailyNet = new Map<number, number>();
+
+		for (const tx of converted) {
+			const amount = tx.convertedAmount;
+			if (tx.type === 'INCOME') {
+				totalIncome += amount;
+			} else if (tx.type === 'EXPENSE') {
+				totalExpense += amount;
+				const catName = tx.category?.name || 'بدون فئة';
+				expenseByCategory.set(catName, (expenseByCategory.get(catName) || 0) + amount);
+			}
+			const day = tx.occurredAt.getUTCDate();
+			const netChange = tx.type === 'INCOME' ? amount : -amount;
+			dailyNet.set(day, (dailyNet.get(day) || 0) + netChange);
+		}
+
+		const balance = totalIncome - totalExpense;
+
+		// 7. تحضير البيانات للرسوم البيانية
+		const categoriesChartData = Array.from(expenseByCategory.entries())
+			.map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }))
+			.sort((a, b) => b.value - a.value);
+
+		const dailyChartData = Array.from(dailyNet.entries())
+			.map(([day, value]) => ({ day, value: Number(value.toFixed(2)) }))
+			.sort((a, b) => a.day - b.day);
+
+		// 8. آخر 20 معاملة (مع الحقل المفرد)
+		const recentTransactions = converted.slice(0, 20).map((tx) => ({
+			id: tx.id,
+			occurredAt: tx.occurredAt.toISOString(),
+			description: tx.description,
+			category: tx.category ? { id: tx.category.id, name: tx.category.name } : null,
+			wallet: { id: tx.wallet!.id, name: tx.wallet!.name },
+			amount: Number(tx.convertedAmount.toFixed(2)),
+			type: tx.type,
+		}));
+
 		return NextResponse.json({
 			ok: true,
 			summary: {
-				income: totalIncome,
-				expense: totalExpense,
-				balance: totalIncome - totalExpense,
+				income: Number(totalIncome.toFixed(2)),
+				expense: Number(totalExpense.toFixed(2)),
+				balance: Number(balance.toFixed(2)),
 			},
 			charts: {
-				categories: categoriesChartData, //expense breakdown by category
-				daily: dailyChartData, // daily net balance trend
+				categories: categoriesChartData,
+				daily: dailyChartData,
 			},
-			transaction: recentTransactions.map((tx) => ({
-				...tx,
-				amount: Number(tx.amount ?? 0), // convert decimal to number for json
-			})),
+			transaction: recentTransactions, // ✅ مفرد كما تطلبه الصفحة
+			preferredCurrency: targetCurrency,
 		});
-	} catch (e) {
-		console.error('[DASHBOARD_GET_ERROR]', e);
-		return NextResponse.json({ error: 'حدث خطأ داخلي في السيرفر' }, { status: 500 });
+	} catch (error) {
+		console.error('[SUMMARY_API_ERROR]', error);
+		return NextResponse.json({ ok: false, error: 'حدث خطأ داخلي' }, { status: 500 });
 	}
 }

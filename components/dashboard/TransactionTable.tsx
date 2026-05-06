@@ -6,9 +6,10 @@ import { Tx } from '@/types/summary';
 type Props = {
 	transactions: Tx[];
 	onDelete: (id: number) => void;
+	currency: string;
 };
 
-export function TransactionTable({ transactions, onDelete }: Props) {
+export function TransactionTable({ transactions, onDelete, currency }: Props) {
 	if (transactions.length === 0) {
 		return (
 			<div className="text-center py-12 text-slate-400 text-sm">لا توجد معاملات لهذا الشهر</div>
@@ -40,7 +41,7 @@ export function TransactionTable({ transactions, onDelete }: Props) {
 								<td
 									className={`p-3 font-semibold ${t.type === 'INCOME' ? 'text-emerald-500' : 'text-red-500'}`}
 								>
-									{t.type === 'INCOME' ? '+' : '-'} {t.amount.toFixed(2)}
+									{t.type === 'INCOME' ? '+' : '-'} {t.amount.toFixed(2)} {currency}
 								</td>
 								<td className="p-3">
 									<button

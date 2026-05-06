@@ -1,7 +1,8 @@
+// app/(dashboard)/wallets/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import useSWR, { useSWRConfig } from 'swr';
+import { useState, useEffect, useCallback } from 'react';
+import useSWR from 'swr';
 import {
 	Dialog,
 	DialogContent,
@@ -30,34 +31,52 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { useExchangeRates } from '@/hooks/useExchangeRates';
-import { CurrencyCode } from '@/types/finance';
 
-// ========== Types ==========
 type Wallet = {
 	id: number;
 	name: string;
-	balance: number;
+	originalBalance: number;
 	currency: string;
+	convertedBalance: number;
 	createdAt: string;
 };
 
-// ========== Fetcher ==========
+type WalletsResponse = {
+	ok: boolean;
+	wallets: Wallet[];
+	preferredCurrency: string;
+	error?: string;
+};
+
+type TotalResponse = {
+	ok: boolean;
+	total: number;
+	currency: string;
+	error?: string;
+};
+
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-// قائمة العملات المدعومة من API
-const SUPPORTED_CURRENCIES: CurrencyCode[] = ['USD', 'EUR', 'SYP', 'GBP', 'TRY', 'AED', 'SAR'];
+const SUPPORTED_CURRENCIES = ['USD', 'EUR', 'SYP', 'GBP', 'TRY', 'AED', 'SAR'];
 
 export default function WalletsPage() {
 	const [mounted, setMounted] = useState(false);
 	useEffect(() => setMounted(true), []);
 
-	const { data, error, isLoading, mutate } = useSWR<{ ok: boolean; wallets: Wallet[] }>(
-		'/api/wallets',
+	// جلب المحافظ
+	const {
+		data: walletsData,
+		error,
+		isLoading,
+		mutate,
+	} = useSWR<WalletsResponse>('/api/wallets', fetcher);
+	// جلب الإجمالي (للبطاقة العلوية)
+	const { data: totalData, isLoading: totalLoading } = useSWR<TotalResponse>(
+		'/api/wallets/total',
 		fetcher
 	);
 
-	// حالة النماذج
+	// حالات النماذج
 	const [editingWallet, setEditingWallet] = useState<Wallet | null>(null);
 	const [walletToDelete, setWalletToDelete] = useState<Wallet | null>(null);
 	const [showAddForm, setShowAddForm] = useState(false);
@@ -66,27 +85,15 @@ export default function WalletsPage() {
 
 	// حقول النموذج
 	const [newName, setNewName] = useState('');
-	const [newCurrency, setNewCurrency] = useState<CurrencyCode>('SYP');
+	const [newCurrency, setNewCurrency] = useState('SYP');
 	const [editName, setEditName] = useState('');
-	const [editCurrency, setEditCurrency] = useState<CurrencyCode>('SYP');
+	const [editCurrency, setEditCurrency] = useState('SYP');
 
-	// استخدام أسعار الصرف
-	const { convert, rates, isLoading: ratesLoading } = useExchangeRates();
+	const wallets = walletsData?.ok ? walletsData.wallets : [];
+	const preferredCurrency = walletsData?.preferredCurrency || 'SYP';
+	const totalBalance = totalData?.ok ? totalData.total : null;
 
-	// الحصول على العملة المفضلة للمستخدم (من user context أو localStorage، هنا نفترض أنها 'SYP' افتراضياً)
-	// يمكن لاحقاً جلبها من API /api/user/preferences
-	const preferredCurrency: CurrencyCode = 'SYP'; // ستغير حسب إعدادات المستخدم
-
-	const wallets = data?.ok ? data.wallets : [];
-
-	// حساب إجمالي الرصيد بالعملة المفضلة
-	const totalBalanceInPreferred = wallets.reduce((total, wallet) => {
-		if (!rates) return total;
-		const converted = convert(wallet.balance, wallet.currency as CurrencyCode, preferredCurrency);
-		return total + (isNaN(converted) ? 0 : converted);
-	}, 0);
-
-	// ========== Handlers ==========
+	// معالج الإضافة
 	const handleAddWallet = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (isSubmitting) return;
@@ -100,7 +107,7 @@ export default function WalletsPage() {
 			});
 			const json = await res.json();
 			if (!res.ok || !json.ok) throw new Error(json.error || 'فشل إضافة المحفظة');
-			await mutate();
+			await mutate(); // تحديث قائمة المحافظ
 			setNewName('');
 			setNewCurrency('SYP');
 			setShowAddForm(false);
@@ -138,9 +145,7 @@ export default function WalletsPage() {
 		setIsSubmitting(true);
 		setErrorMsg(null);
 		try {
-			const res = await fetch(`/api/wallets/${walletToDelete.id}`, {
-				method: 'DELETE',
-			});
+			const res = await fetch(`/api/wallets/${walletToDelete.id}`, { method: 'DELETE' });
 			const json = await res.json();
 			if (!res.ok || !json.ok) throw new Error(json.error || 'فشل حذف المحفظة');
 			await mutate();
@@ -152,15 +157,14 @@ export default function WalletsPage() {
 		}
 	};
 
-	const openEditForm = (wallet: Wallet) => {
-		setErrorMsg(null);
+	const openEditForm = useCallback((wallet: Wallet) => {
 		setEditingWallet(wallet);
 		setEditName(wallet.name);
-		setEditCurrency(wallet.currency as CurrencyCode);
-	};
+		setEditCurrency(wallet.currency);
+		setErrorMsg(null);
+	}, []);
 
-	if (!mounted) return <LoadingScreen />;
-	if (isLoading) return <LoadingScreen />;
+	if (!mounted || isLoading) return <LoadingScreen />;
 	if (error) return <ErrorScreen message={error.message} />;
 
 	return (
@@ -168,7 +172,7 @@ export default function WalletsPage() {
 			className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-6 space-y-6"
 			dir="rtl"
 		>
-			{/* وصف الصفحة */}
+			{/* بطاقة المعلومات */}
 			<div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5">
 				<h1 className="text-xl font-bold text-white mb-2">إدارة المحافظ المالية</h1>
 				<p className="text-slate-300 text-sm leading-relaxed">
@@ -182,22 +186,32 @@ export default function WalletsPage() {
 					<span className="text-amber-400">✦ تعديل محفظة:</span> يمكنك تغيير الاسم أو العملة لاحقاً.
 					<br />
 					<span className="text-rose-400">✦ حذف محفظة:</span> لا يمكن حذف محفظة تحتوي على معاملات
-					مالية. قم بنقل أو حذف المعاملات أولاً.
+					مالية.
 				</p>
 			</div>
 
-			{/* إجمالي الرصيد */}
+			{/* بطاقة إجمالي الرصيد – باللون الأحمر إذا كان سالباً */}
 			<div className="bg-gradient-to-r from-emerald-900/40 to-emerald-800/20 rounded-2xl border border-emerald-500/30 p-5">
 				<div className="text-center">
 					<p className="text-slate-300 text-sm">إجمالي الرصيد (بـ {preferredCurrency})</p>
-					<p className="text-3xl md:text-4xl font-bold text-emerald-400">
-						{ratesLoading ? 'جاري التحميل...' : totalBalanceInPreferred.toLocaleString()}
+					<p
+						className={`text-3xl md:text-4xl font-bold ${
+							totalLoading || totalBalance === null
+								? 'text-slate-400'
+								: totalBalance < 0
+									? 'text-red-400'
+									: 'text-emerald-400'
+						}`}
+					>
+						{totalLoading || totalBalance === null
+							? 'جاري التحميل...'
+							: totalBalance.toLocaleString()}
 					</p>
 					<p className="text-xs text-slate-400 mt-1">محسوب بأسعار الصرف الحالية</p>
 				</div>
 			</div>
 
-			{/* رسالة خطأ عامة */}
+			{/* رسالة الخطأ العامة */}
 			{errorMsg && (
 				<div className="bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-xl text-sm">
 					{errorMsg}
@@ -214,7 +228,7 @@ export default function WalletsPage() {
 				</Button>
 			</div>
 
-			{/* نموذج الإضافة (مضمن) */}
+			{/* نموذج الإضافة المضمن */}
 			{showAddForm && (
 				<div className="rounded-2xl border border-white/10 bg-white/5 p-5">
 					<h3 className="text-white font-semibold mb-3">إضافة محفظة جديدة</h3>
@@ -231,10 +245,7 @@ export default function WalletsPage() {
 						</div>
 						<div>
 							<Label className="text-slate-300">العملة الأساسية</Label>
-							<Select
-								value={newCurrency}
-								onValueChange={(val) => setNewCurrency(val as CurrencyCode)}
-							>
+							<Select value={newCurrency} onValueChange={setNewCurrency}>
 								<SelectTrigger className="bg-slate-800/50 border-white/10 text-white">
 									<SelectValue />
 								</SelectTrigger>
@@ -254,7 +265,7 @@ export default function WalletsPage() {
 				</div>
 			)}
 
-			{/* قائمة المحافظ */}
+			{/* شبكة المحافظ */}
 			{wallets.length === 0 ? (
 				<div className="text-center py-12 text-slate-400 border border-dashed border-white/20 rounded-xl">
 					لا توجد محافظ بعد. أضف محفظتك الأولى باستخدام الزر أعلاه.
@@ -266,8 +277,6 @@ export default function WalletsPage() {
 							key={wallet.id}
 							wallet={wallet}
 							preferredCurrency={preferredCurrency}
-							convert={convert}
-							ratesLoading={ratesLoading}
 							onEdit={() => openEditForm(wallet)}
 							onDelete={() => setWalletToDelete(wallet)}
 						/>
@@ -285,19 +294,11 @@ export default function WalletsPage() {
 					<form onSubmit={handleEditWallet} className="space-y-4">
 						<div>
 							<Label>اسم المحفظة</Label>
-							<Input
-								value={editName}
-								onChange={(e) => setEditName(e.target.value)}
-								required
-								className="bg-slate-800 border-white/10"
-							/>
+							<Input value={editName} onChange={(e) => setEditName(e.target.value)} required />
 						</div>
 						<div>
 							<Label>العملة</Label>
-							<Select
-								value={editCurrency}
-								onValueChange={(val) => setEditCurrency(val as CurrencyCode)}
-							>
+							<Select value={editCurrency} onValueChange={setEditCurrency}>
 								<SelectTrigger>
 									<SelectValue />
 								</SelectTrigger>
@@ -332,11 +333,9 @@ export default function WalletsPage() {
 						<AlertDialogTitle>هل أنت متأكد من حذف المحفظة؟</AlertDialogTitle>
 						<AlertDialogDescription>
 							هذا الإجراء لا يمكن التراجع عنه. سيتم حذف المحفظة {walletToDelete?.name} نهائياً.
-							{walletToDelete && (
-								<span className="block mt-2 text-amber-400">
-									ملاحظة: لا يمكن حذف المحفظة إذا كانت تحتوي على معاملات.
-								</span>
-							)}
+							<span className="block mt-2 text-amber-400">
+								ملاحظة: لا يمكن حذف المحفظة إذا كانت تحتوي على معاملات.
+							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -351,29 +350,19 @@ export default function WalletsPage() {
 	);
 }
 
-// ========== Components ==========
+// ========== بطاقة المحفظة الفرعية ==========
 function WalletCard({
 	wallet,
 	preferredCurrency,
-	convert,
-	ratesLoading,
 	onEdit,
 	onDelete,
 }: {
 	wallet: Wallet;
-	preferredCurrency: CurrencyCode;
-	convert: (amount: number, from: CurrencyCode, to: CurrencyCode) => number;
-	ratesLoading: boolean;
+	preferredCurrency: string;
 	onEdit: () => void;
 	onDelete: () => void;
 }) {
-	const convertedBalance = convert(
-		wallet.balance,
-		wallet.currency as CurrencyCode,
-		preferredCurrency
-	);
 	const isConverted = wallet.currency !== preferredCurrency;
-
 	return (
 		<div className="rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition flex flex-col gap-3">
 			<div className="flex justify-between items-start">
@@ -415,13 +404,13 @@ function WalletCard({
 			<div>
 				<p className="text-slate-300 text-sm">الرصيد الأصلي:</p>
 				<p className="text-white text-xl font-bold">
-					{wallet.balance.toLocaleString()} {wallet.currency}
+					{wallet.originalBalance.toLocaleString()} {wallet.currency}
 				</p>
 				{isConverted && (
 					<>
 						<p className="text-slate-300 text-sm mt-2">بالعملة المفضلة ({preferredCurrency}):</p>
 						<p className="text-emerald-400 text-lg font-semibold">
-							{ratesLoading ? 'جاري التحويل...' : convertedBalance.toLocaleString()}
+							{wallet.convertedBalance.toLocaleString()}
 						</p>
 					</>
 				)}
