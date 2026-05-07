@@ -84,7 +84,7 @@ export function DashboardSidebar({ isOpen, onClose, onLogout }: any) {
 						</div>
 						<div className="text-center lg:text-right overflow-hidden">
 							<p className="font-bold text-white text-sm lg:text-xs truncate tracking-tight">
-								{user?.name || 'مُهند علي'}
+								{user?.name || 'مستخدم'}
 							</p>
 							<span className="text-[9px] lg:text-[8px] text-indigo-300/70 font-bold uppercase">
 								Pro Member
