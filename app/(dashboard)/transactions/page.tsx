@@ -119,7 +119,7 @@ export default function TransactionsPage() {
 
 	return (
 		<main
-			className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-800 to-slate-950 p-4 md:p-6 space-y-6"
+			className="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-950 via-slate-800 to-slate-950 p-4 md:p-6 space-y-6"
 			dir="rtl"
 		>
 			<TransactionsHeader />

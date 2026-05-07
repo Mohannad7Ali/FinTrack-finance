@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 	}, []);
 
 	return (
-		<div className="min-h-screen bg-slate-950 text-white font-sans antialiased flex flex-col">
+		<div className="min-h-screen bg-slate-950 text-white font-sans antialiased flex flex-col overflow-x-hidden w-full">
 			<div className="flex flex-1">
 				<DashboardSidebar
 					isOpen={isSidebarOpen}

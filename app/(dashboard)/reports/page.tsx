@@ -40,7 +40,7 @@ export default function ReportsPage() {
 
 	return (
 		<main
-			className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-3 sm:p-6 space-y-5 sm:space-y-6"
+			className="min-h-screen   overflow-x-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-3 sm:p-6 space-y-5 sm:space-y-6"
 			dir="rtl"
 		>
 			{/* رأس الصفحة مع منتقي الشهر والسنة */}

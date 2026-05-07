@@ -68,8 +68,13 @@ const cairo = Cairo({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="ar" dir="rtl" suppressHydrationWarning className={cn(cairo.variable, 'dark')}>
-			<body className="font-sans" suppressHydrationWarning>
+		<html
+			lang="ar"
+			dir="rtl"
+			suppressHydrationWarning
+			className={cn(cairo.variable, 'dark overflow-x-hidden w-full')}
+		>
+			<body className="font-sans overflow-x-hidden w-full" suppressHydrationWarning>
 				<Providers> {children}</Providers>
 
 				<Toaster

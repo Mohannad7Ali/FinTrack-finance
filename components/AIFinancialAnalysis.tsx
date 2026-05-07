@@ -87,7 +87,6 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 
 			try {
 				const timeoutId = setTimeout(() => controller.abort(), 50000);
-				// 🔁 إضافة معامل refresh=true إذا كان مطلوباً
 				const url = `/api/ai/financial-analysis?months=${months}${forceRefresh ? '&refresh=true' : ''}`;
 				const res = await fetch(url, {
 					signal,
@@ -151,56 +150,49 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 
 	useEffect(() => {
 		mountedRef.current = true;
-		if (autoFetch) fetchAnalysis(false); // التحميل الأول بدون forceRefresh
+		if (autoFetch) fetchAnalysis(false);
 		return () => {
 			mountedRef.current = false;
 			if (abortControllerRef.current) abortControllerRef.current.abort();
 		};
 	}, [autoFetch, fetchAnalysis]);
 
-	// دالة مخصصة لزر التحديث: تمرير forceRefresh = true
 	const handleRefresh = () => {
 		fetchAnalysis(true);
 	};
 
-	// ------------------- باقي حالات العرض -------------------
 	if (loading) {
 		return (
 			<Card
-				className={`overflow-hidden border-white/10 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80 backdrop-blur-sm shadow-2xl ${className}`}
+				className={`overflow-hidden border-emerald-500/20 bg-slate-950/50 backdrop-blur-xl ${className}`}
 			>
-				<CardHeader className="pb-3">
-					<CardTitle className="flex items-center gap-2 text-emerald-300">
-						<BrainCircuit className="h-5 w-5 animate-pulse" />
-						<span className="bg-gradient-to-r from-emerald-300 to-blue-400 bg-clip-text text-transparent">
-							التحليل المالي بالذكاء الاصطناعي
-						</span>
-					</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-5">
-					<div className="flex justify-center py-2">
-						<Loader2 className="h-8 w-8 text-emerald-400 animate-spin" />
+				<CardHeader className="pb-4">
+					<div className="flex items-center gap-3">
+						<div className="relative">
+							<BrainCircuit className="h-6 w-6 text-emerald-400 animate-pulse" />
+							<div className="absolute inset-0 blur-lg bg-emerald-400/50 animate-pulse" />
+						</div>
+						<Skeleton className="h-6 w-48 bg-slate-800" />
 					</div>
-					{retryMessage ? (
-						<div className="text-center text-amber-400 text-sm">{retryMessage}</div>
-					) : (
-						<motion.div
+				</CardHeader>
+				<CardContent className="space-y-6 px-4 sm:px-6">
+					<div className="flex flex-col items-center justify-center py-4 gap-4">
+						<Loader2 className="h-10 w-10 text-emerald-500 animate-spin" />
+						<motion.p
 							key={tipIndex}
-							initial={{ opacity: 0, y: 10 }}
-							animate={{ opacity: 1, y: 0 }}
-							exit={{ opacity: 0, y: -10 }}
-							className="bg-slate-800/50 border border-slate-700/50 p-3 rounded-xl text-sm flex items-start gap-3"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							className="text-sm text-emerald-300/80 text-center max-w-xs leading-relaxed"
 						>
-							<Sparkles className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-							<p className="text-slate-300">{loadingTips[tipIndex]}</p>
-						</motion.div>
-					)}
-					<div className="space-y-3">
-						<Skeleton className="h-20 w-full bg-slate-800/50 rounded-xl" />
-						<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-							<Skeleton className="h-28 w-full bg-slate-800/50 rounded-xl" />
-							<Skeleton className="h-28 w-full bg-slate-800/50 rounded-xl" />
-							<Skeleton className="h-28 w-full bg-slate-800/50 rounded-xl" />
+							{loadingTips[tipIndex]}
+						</motion.p>
+					</div>
+					<div className="space-y-4">
+						<Skeleton className="h-24 w-full bg-slate-800/40 rounded-2xl" />
+						<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+							<Skeleton className="h-32 w-full bg-slate-800/40 rounded-2xl" />
+							<Skeleton className="h-32 w-full bg-slate-800/40 rounded-2xl" />
+							<Skeleton className="h-32 w-full bg-slate-800/40 rounded-2xl" />
 						</div>
 					</div>
 				</CardContent>
@@ -210,36 +202,25 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 
 	if (data?.isInsufficientData) {
 		return (
-			<Card
-				className={`border-emerald-500/20 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80 backdrop-blur-sm shadow-xl ${className}`}
-			>
+			<Card className={`border-amber-500/20 bg-slate-950/40 backdrop-blur-xl ${className}`}>
 				<CardHeader>
-					<CardTitle className="flex items-center gap-2 text-amber-400">
-						<BrainCircuit className="h-5 w-5" />
-						تحليل مالي – بيانات غير كافية
+					<CardTitle className="flex items-center gap-2 text-amber-400 text-lg">
+						<Sparkles className="h-5 w-5" />
+						تحليل ذكي قيد التحضير
 					</CardTitle>
 				</CardHeader>
-				<CardContent className="space-y-4">
-					<Alert className="bg-amber-950/30 border-amber-500/30">
-						<AlertTriangle className="h-4 w-4 text-amber-400" />
-						<AlertTitle className="text-amber-300">مرحباً بك في FinTrack</AlertTitle>
-						<AlertDescription className="text-amber-200/80">
-							<p>{data.raw_summary}</p>
-							<div className="mt-3">
-								<Button
-									size="sm"
-									variant="outline"
-									onClick={handleRefresh}
-									className="gap-2 border-amber-500/50 text-amber-300 hover:bg-amber-950/50"
-								>
-									<RefreshCw className="h-3 w-3" /> تحديث بعد الإضافة
-								</Button>
-							</div>
+				<CardContent className="px-4 sm:px-6">
+					<Alert className="bg-amber-500/5 border-amber-500/20 rounded-2xl">
+						<AlertDescription className="text-amber-100/90 leading-relaxed">
+							{data.raw_summary}
 						</AlertDescription>
 					</Alert>
-					<div className="text-center text-xs text-slate-400 pt-2">
-						💡 بعد إضافة 3 مصروفات على الأقل، سيظهر تحليل ذكي شامل.
-					</div>
+					<Button
+						onClick={handleRefresh}
+						className="mt-6 w-full sm:w-auto bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/20 rounded-xl"
+					>
+						<RefreshCw className="ml-2 h-4 w-4" /> تحديث البيانات
+					</Button>
 				</CardContent>
 			</Card>
 		);
@@ -247,32 +228,18 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 
 	if (error && !data) {
 		return (
-			<Card
-				className={`border-red-500/20 bg-gradient-to-br from-slate-900/80 to-slate-950/80 backdrop-blur-sm ${className}`}
-			>
-				<CardContent className="pt-6">
-					<Alert variant="destructive" className="bg-red-950/30 border-red-500/30">
-						<AlertTriangle className="h-4 w-4 text-red-400" />
-						<AlertTitle className="text-red-300">تعذر الحصول على التحليل</AlertTitle>
-						<AlertDescription className="space-y-3">
-							<p className="text-red-200/80">{error}</p>
-							<div className="flex gap-2">
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={handleRefresh}
-									className="gap-2 border-red-500/50 text-red-300 hover:bg-red-950/50"
-								>
-									<RefreshCw className="h-3 w-3" /> إعادة المحاولة
-								</Button>
-								{!navigator.onLine && (
-									<Badge variant="outline" className="border-yellow-500/50 text-yellow-400">
-										<WifiOff className="h-3 w-3 ml-1" /> غير متصل
-									</Badge>
-								)}
-							</div>
-						</AlertDescription>
-					</Alert>
+			<Card className="border-red-500/20 bg-slate-950/40">
+				<CardContent className="p-6 text-center">
+					<AlertTriangle className="h-10 w-10 text-red-500 mx-auto mb-4" />
+					<h3 className="text-white font-bold mb-2">عذراً، حدث خطأ ما</h3>
+					<p className="text-slate-400 text-sm mb-6">{error}</p>
+					<Button
+						onClick={handleRefresh}
+						variant="outline"
+						className="border-red-500/30 text-red-400"
+					>
+						إعادة المحاولة
+					</Button>
 				</CardContent>
 			</Card>
 		);
@@ -280,61 +247,59 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 
 	if (!data) return null;
 
-	const healthColor = data.financial_health.includes('ممتاز')
-		? 'from-emerald-600/20 to-emerald-800/30 border-emerald-500/40 text-emerald-300'
+	const healthStyles = data.financial_health.includes('ممتاز')
+		? 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/30 text-emerald-400 shadow-emerald-500/10'
 		: data.financial_health.includes('جيد')
-			? 'from-blue-600/20 to-blue-800/30 border-blue-500/40 text-blue-300'
-			: data.financial_health.includes('ضعيف')
-				? 'from-red-600/20 to-red-800/30 border-red-500/40 text-red-300'
-				: 'from-amber-600/20 to-amber-800/30 border-amber-500/40 text-amber-300';
+			? 'from-blue-500/20 to-blue-500/5 border-blue-500/30 text-blue-400 shadow-blue-500/10'
+			: 'from-amber-500/20 to-amber-500/5 border-amber-500/30 text-amber-400 shadow-amber-500/10';
 
 	return (
 		<motion.div
-			initial={{ opacity: 0, y: 20 }}
-			animate={{ opacity: 1, y: 0 }}
-			transition={{ duration: 0.4 }}
+			initial={{ opacity: 0, scale: 0.98 }}
+			animate={{ opacity: 1, scale: 1 }}
+			className={`w-full group ${className}`}
 		>
-			<Card
-				className={`group relative overflow-hidden border-white/10 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-slate-950/90 backdrop-blur-sm shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500 ${className}`}
-			>
-				<div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+			<Card className="relative overflow-hidden border-white/5 bg-slate-900/60 backdrop-blur-2xl shadow-2xl transition-all duration-500 hover:border-emerald-500/20">
+				{/* AI Glow Effect */}
+				<div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
+				<div className="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
 
 				<CardHeader
-					className="pb-2 cursor-pointer relative z-10"
+					className="pb-4 cursor-pointer select-none px-4 sm:px-6"
 					onClick={() => setExpanded(!expanded)}
 				>
-					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-						<div className="flex items-center gap-2">
-							<div className="p-1.5 rounded-lg bg-emerald-500/10">
-								<BrainCircuit className="h-5 w-5 text-emerald-400" />
+					<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+						<div className="flex items-center gap-3">
+							<div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-600/20 border border-white/10">
+								<BrainCircuit className="h-6 w-6 text-emerald-400" />
 							</div>
-							<CardTitle className="text-base sm:text-lg font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-								التحليل المالي بالذكاء الاصطناعي
-							</CardTitle>
+							<div>
+								<CardTitle className="text-lg font-bold text-white tracking-tight">
+									التحليل الذكي{' '}
+									<span className="text-emerald-400 font-light opacity-80">FinAI</span>
+								</CardTitle>
+								<div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+									<Clock className="h-3 w-3" />
+									{new Date(data.generated_at).toLocaleString('ar-EG', {
+										hour: '2-digit',
+										minute: '2-digit',
+									})}
+									<span className="flex items-center gap-1 text-emerald-500/70">
+										<ShieldCheck className="h-3 w-3" /> مشفر وآمن
+									</span>
+								</div>
+							</div>
 						</div>
-						<div className="flex items-center gap-2 self-end sm:self-auto">
+
+						<div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
 							<Badge
-								className={`bg-gradient-to-r ${healthColor} border px-2 py-0.5 text-xs font-medium`}
+								className={`px-3 py-1.5 rounded-lg border bg-gradient-to-tr ${healthStyles} font-bold`}
 							>
 								{data.financial_health}
 							</Badge>
-							<Button
-								variant="ghost"
-								size="sm"
-								className="h-7 w-7 p-0 rounded-full hover:bg-white/10 text-slate-400 hover:text-white"
-							>
-								{expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-							</Button>
-						</div>
-					</div>
-					<div className="flex justify-between items-center mt-1 text-xs text-slate-400">
-						<div className="flex items-center gap-1">
-							<Clock className="h-3 w-3" />
-							<span>{new Date(data.generated_at).toLocaleString('ar-EG')}</span>
-						</div>
-						<div className="flex items-center gap-1">
-							<ShieldCheck className="h-3 w-3 text-emerald-400" />
-							<span>تحليل فوري</span>
+							<div className="p-1.5 rounded-full bg-white/5 text-slate-400">
+								{expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+							</div>
 						</div>
 					</div>
 				</CardHeader>
@@ -342,88 +307,88 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 				<AnimatePresence>
 					{expanded && (
 						<motion.div
-							initial={{ opacity: 0, height: 0 }}
-							animate={{ opacity: 1, height: 'auto' }}
-							exit={{ opacity: 0, height: 0 }}
-							transition={{ duration: 0.3, ease: 'easeInOut' }}
+							initial={{ height: 0, opacity: 0 }}
+							animate={{ height: 'auto', opacity: 1 }}
+							exit={{ height: 0, opacity: 0 }}
+							transition={{ duration: 0.4, ease: 'circOut' }}
 						>
-							<CardContent className="space-y-5 pt-0 relative z-10">
-								{data.spending_patterns.length > 0 && (
-									<div className="bg-slate-800/30 rounded-xl p-4 border border-white/5">
-										<div className="flex items-center gap-2 mb-3">
-											<div className="p-1 rounded bg-emerald-500/10">
-												<TrendingDown className="h-4 w-4 text-emerald-400" />
-											</div>
-											<h3 className="font-semibold text-sm text-white">أنماط الإنفاق الرئيسية</h3>
+							<CardContent className="space-y-6 pt-0 px-4 sm:px-6 pb-6">
+								{/* Grid for Patterns & Savings */}
+								<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+									{/* Spending Patterns */}
+									<div className="group/item relative p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-colors">
+										<div className="flex items-center gap-2 mb-4 text-emerald-400">
+											<TrendingDown size={18} />
+											<h3 className="text-sm font-bold text-white">أنماط الإنفاق</h3>
 										</div>
-										<ul className="space-y-2 pr-4">
-											{data.spending_patterns.map((p, i) => (
-												<li key={i} className="text-sm text-slate-300 flex items-start gap-2">
-													<span className="text-emerald-400 text-xs">•</span>
-													{p}
+										<ul className="space-y-3">
+											{data.spending_patterns.map((item, i) => (
+												<li key={i} className="text-sm text-slate-300 flex gap-3 leading-relaxed">
+													<span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500/50" />
+													{item}
 												</li>
 											))}
 										</ul>
 									</div>
-								)}
 
-								{data.saving_opportunities.length > 0 && (
-									<div className="bg-slate-800/30 rounded-xl p-4 border border-white/5">
-										<div className="flex items-center gap-2 mb-3">
-											<div className="p-1 rounded bg-emerald-500/10">
-												<PiggyBank className="h-4 w-4 text-emerald-400" />
-											</div>
-											<h3 className="font-semibold text-sm text-white">فرص التوفير المقترحة</h3>
+									{/* Saving Opportunities */}
+									<div className="group/item relative p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-colors">
+										<div className="flex items-center gap-2 mb-4 text-blue-400">
+											<PiggyBank size={18} />
+											<h3 className="text-sm font-bold text-white">فرص الادخار</h3>
 										</div>
-										<ul className="space-y-2 pr-4">
-											{data.saving_opportunities.map((o, i) => (
-												<li key={i} className="text-sm text-slate-300 flex items-start gap-2">
-													<span className="text-emerald-400 text-xs">•</span>
-													{o}
+										<ul className="space-y-3">
+											{data.saving_opportunities.map((item, i) => (
+												<li key={i} className="text-sm text-slate-300 flex gap-3 leading-relaxed">
+													<span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500/50" />
+													{item}
 												</li>
 											))}
 										</ul>
 									</div>
-								)}
+								</div>
 
+								{/* Risk Alerts if any */}
 								{data.risk_alerts.length > 0 && (
-									<Alert className="bg-red-950/20 border-red-500/30 text-red-200">
-										<AlertTriangle className="h-4 w-4 text-red-400" />
-										<AlertTitle className="text-red-300 text-sm font-semibold">
-											تنبيهات مالية
-										</AlertTitle>
-										<AlertDescription>
-											<ul className="space-y-1 pr-4 mt-1">
-												{data.risk_alerts.map((r, i) => (
-													<li key={i} className="text-xs text-red-200/80 flex items-start gap-2">
-														<span className="text-red-400 text-xs">⚠</span>
-														{r}
-													</li>
-												))}
-											</ul>
-										</AlertDescription>
-									</Alert>
+									<motion.div
+										initial={{ x: -10, opacity: 0 }}
+										animate={{ x: 0, opacity: 1 }}
+										className="bg-red-500/5 border border-red-500/20 p-4 rounded-2xl"
+									>
+										<div className="flex items-center gap-2 text-red-400 mb-2 font-bold text-sm">
+											<AlertTriangle size={16} /> تنبيهات هامة
+										</div>
+										<div className="space-y-2">
+											{data.risk_alerts.map((alert, i) => (
+												<p key={i} className="text-xs text-red-200/80 mr-6 list-item break-words">
+													{alert}
+												</p>
+											))}
+										</div>
+									</motion.div>
 								)}
 
-								<div className="border-t border-white/10 pt-4">
-									<div className="flex items-center gap-2 mb-2">
-										<BarChart3 className="h-4 w-4 text-emerald-400" />
-										<h3 className="font-semibold text-sm text-white">الملخص والتوصيات</h3>
+								{/* Summary Section */}
+								<div className="relative p-5 rounded-2xl bg-gradient-to-br from-emerald-500/[0.07] to-blue-500/[0.07] border border-white/5">
+									<div className="flex items-center gap-2 mb-3 text-white/90">
+										<BarChart3 size={18} className="text-emerald-400" />
+										<h3 className="text-sm font-bold">ملخص التوصيات الذكي</h3>
 									</div>
-									<p className="text-sm leading-relaxed text-slate-300 whitespace-pre-wrap">
+									<p className="text-sm leading-relaxed text-slate-300 break-words whitespace-pre-wrap">
 										{data.raw_summary}
 									</p>
 								</div>
 
-								<div className="flex justify-start pt-2">
+								{/* Refresh Button */}
+								<div className="flex justify-center pt-2">
 									<Button
 										variant="ghost"
 										size="sm"
-										onClick={handleRefresh} // ✅ استدعاء الدالة التي تفرض التحديث
-										className="gap-2 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-full transition-all"
+										onClick={handleRefresh}
+										className="text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/5 rounded-full px-6 transition-all border border-transparent hover:border-emerald-500/20"
 									>
-										<RefreshCw className="h-3.5 w-3.5" />
-										تحديث التحليل
+										<RefreshCw className={`ml-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+										تحديث التحليل اللحظي
 									</Button>
 								</div>
 							</CardContent>

@@ -108,7 +108,7 @@ export default function Dashboard() {
 
 	return (
 		<main
-			className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-6 space-y-6 md:space-y-8"
+			className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-6 space-y-6 md:space-y-8 overflow-x-hidden"
 			dir="rtl"
 		>
 			{/* Hero Section */}
