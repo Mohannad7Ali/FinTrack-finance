@@ -211,3 +211,14 @@ body {
 		width: 6px;
 	}
 }
+/* حل بديل أكثر دقة */
+.dark [data-state='open'] > div:last-child,
+[role='dialog'] > div:last-child {
+	max-width: 90vw;
+}
+
+@media (min-width: 768px) {
+	[role='dialog'] > div:last-child {
+		max-width: 32rem;
+	}
+}
