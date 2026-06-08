@@ -1,8 +1,10 @@
+// app/(dashboard)/layout.tsx (أو المسار الذي تستخدمه)
 'use client';
 
 import { useState, useCallback } from 'react';
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardSidebar } from './DashboardSidebar';
+import { BottomNavBar } from './BottomNavBar';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
 	const today = new Date();
@@ -40,10 +42,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 							onMenuClick={handleMenuClick}
 						/>
 					</div>
-					<main className="flex-1 px-4 md:px-6 pb-6">{children}</main>
+					<main className="flex-1 px-4 md:px-6 pb-20 md:pb-6">{children}</main>
 
-					{/* تذييل بسيط */}
-					<footer className="border-t border-white/10 mt-6 pt-4 pb-4 text-center">
+					{/* تذييل عادي يظهر فقط على الشاشات الكبيرة */}
+					<footer className="hidden md:block border-t border-white/10 mt-6 pt-4 pb-4 text-center">
 						<p className="text-[11px] md:text-xs text-slate-500 flex items-center justify-center gap-1 flex-wrap">
 							<a
 								href="https://mohannad-ali-portfolio.vercel.app/"
@@ -61,6 +63,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 					</footer>
 				</div>
 			</div>
+
+			{/* شريط التنقل السفلي يظهر فقط على الموبايل */}
+			<BottomNavBar />
 		</div>
 	);
 }

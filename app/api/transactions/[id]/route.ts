@@ -81,7 +81,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 			return NextResponse.json({ ok: false, error: 'المحفظة غير موجودة' }, { status: 404 });
 		}
 
-		// 3. التحقق من الفئة
+		// 3. التحقق من الفئة (إذا وُجدت)
 		if (categoryId) {
 			const category = await prisma.category.findFirst({
 				where: { id: categoryId, OR: [{ userId }, { userId: null }] },
@@ -91,33 +91,18 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 			}
 		}
 
-		// 4. التحديث الذري
+		// 4. التحديث الذري (بدون التحقق من الرصيد)
 		await prisma.$transaction(async (tx) => {
 			const oldAmountNum = oldTx.amount.toNumber();
+			// عكس تأثير المعاملة القديمة على رصيد المحفظة القديمة
 			const oldBalanceChange = oldTx.type === 'INCOME' ? -oldAmountNum : oldAmountNum;
-
-			// عكس تأثير المعاملة القديمة
 			await tx.wallet.update({
 				where: { id: oldTx.walletId },
 				data: { balance: { increment: oldBalanceChange } },
 			});
 
+			// تطبيق تأثير المعاملة الجديدة (يمكن أن يصبح الرصيد سالباً)
 			const newBalanceChange = type === 'INCOME' ? amount : -amount;
-
-			// التحقق من الرصيد للمصروف
-			if (type === 'EXPENSE') {
-				let effectiveBalance: number;
-				if (oldTx.walletId === walletId) {
-					effectiveBalance = newWallet.balance.toNumber() + oldBalanceChange;
-				} else {
-					effectiveBalance = newWallet.balance.toNumber();
-				}
-				if (effectiveBalance < amount) {
-					throw new Error('INSUFFICIENT_BALANCE');
-				}
-			}
-
-			// تطبيق تأثير المعاملة الجديدة
 			await tx.wallet.update({
 				where: { id: walletId },
 				data: { balance: { increment: newBalanceChange } },
@@ -139,12 +124,6 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
 		return NextResponse.json({ ok: true });
 	} catch (error: any) {
-		if (error.message === 'INSUFFICIENT_BALANCE') {
-			return NextResponse.json(
-				{ ok: false, error: 'رصيد المحفظة غير كافٍ لهذه العملية' },
-				{ status: 409 }
-			);
-		}
 		console.error('[PATCH /api/transactions]', error);
 		return NextResponse.json({ ok: false, error: 'حدث خطأ أثناء تعديل المعاملة' }, { status: 500 });
 	}

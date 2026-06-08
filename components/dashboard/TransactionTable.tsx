@@ -27,7 +27,7 @@ export function TransactionTable({ transactions, onDelete, currency }: Props) {
 							<th className="p-3 text-right text-slate-300">الوصف</th>
 							<th className="p-3 text-right text-slate-300">الفئة</th>
 							<th className="p-3 text-right text-slate-300">القيمة</th>
-							<th className="p-3 text-right text-slate-300">إجراءات</th>
+							{/* <th className="p-3 text-right text-slate-300">إجراءات</th> */}
 						</tr>
 					</thead>
 					<tbody>
@@ -43,14 +43,14 @@ export function TransactionTable({ transactions, onDelete, currency }: Props) {
 								>
 									{t.type === 'INCOME' ? '+' : '-'} {t.amount.toFixed(2)} {currency}
 								</td>
-								<td className="p-3">
+								{/* <td className="p-3">
 									<button
 										onClick={() => onDelete(t.id)}
 										className="text-red-500 hover:text-red-700 transition"
 									>
 										حذف
 									</button>
-								</td>
+								</td> */}
 							</tr>
 						))}
 					</tbody>
@@ -80,12 +80,12 @@ export function TransactionTable({ transactions, onDelete, currency }: Props) {
 							</div>
 						</div>
 						<div className="flex justify-end pt-2">
-							<button
+							{/* <button
 								onClick={() => onDelete(t.id)}
 								className="text-red-500 text-sm hover:underline"
 							>
 								حذف
-							</button>
+							</button> */}
 						</div>
 					</div>
 				))}
