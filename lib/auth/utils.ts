@@ -5,7 +5,7 @@ const jwtSecret = process.env.JWT_SECRET || 'default_secret_key';
 if (!jwtSecret) {
 	throw new Error('jwt secret undefined');
 }
-const JWT_EXPIRATION = '7d';
+const JWT_EXPIRATION = '10d';
 
 export interface AuthPayload extends JwtPayload {
 	sub: string; //userid
@@ -21,6 +21,22 @@ export function verifyJwt(token: string): AuthPayload | null {
 		return jwt.verify(token, jwtSecret as string) as AuthPayload;
 	} catch {
 		return null;
+	}
+}
+
+export function isTokenValid(token: string): boolean {
+	try {
+		// فك تشفير JWT بدون التحقق من التوقيع (فقط لقراءة الحمولة)
+		const payloadBase64 = token.split('.')[1];
+		const payloadJson = Buffer.from(payloadBase64, 'base64').toString();
+		const payload = JSON.parse(payloadJson);
+		const exp = payload.exp; // expiry timestamp بالثواني
+		if (exp && Date.now() >= exp * 1000) {
+			return false; // منتهي الصلاحية
+		}
+		return true;
+	} catch {
+		return false; // أي خطأ في فك التشفير يعني توكن غير صالح
 	}
 }
 

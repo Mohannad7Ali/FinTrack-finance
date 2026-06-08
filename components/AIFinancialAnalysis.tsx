@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
 	BrainCircuit,
 	TrendingDown,
@@ -9,7 +9,6 @@ import {
 	RefreshCw,
 	ChevronDown,
 	ChevronUp,
-	WifiOff,
 	Clock,
 	Sparkles,
 	BarChart3,
@@ -61,7 +60,7 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 		if (loading) {
 			tipIntervalRef.current = setInterval(() => {
 				setTipIndex((prev) => (prev + 1) % loadingTips.length);
-			}, 4000);
+			}, 2000);
 		} else {
 			if (tipIntervalRef.current) clearInterval(tipIntervalRef.current);
 		}

@@ -12,10 +12,10 @@ body {
 }
 
 /* ✅ أي عنصر قد يسبب خروجاً عن الشاشة */
-* {
+/* * {
 	max-width: 100%;
 	box-sizing: border-box;
-}
+} */
 @theme {
 	/* تعريف الألوان المخصصة - ستتحول تلقائياً إلى كلاسات مثل bg-brand أو text-brand */
 	--color-brand: #22c55e;

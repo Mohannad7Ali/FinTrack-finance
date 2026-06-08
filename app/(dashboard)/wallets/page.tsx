@@ -55,7 +55,7 @@ type TotalResponse = {
 	error?: string;
 };
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { fetcher } from '@/lib/fetcher';
 
 const SUPPORTED_CURRENCIES = ['USD', 'EUR', 'SYP', 'GBP', 'TRY', 'AED', 'SAR'];
 

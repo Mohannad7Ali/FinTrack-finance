@@ -6,6 +6,7 @@ export async function fetcher<T>(url: string): Promise<T> {
 	if (res.status === 401) {
 		// إعادة التوجيه إلى صفحة تسجيل الدخول في حال عدم المصادقة
 		if (typeof window !== 'undefined') {
+			document.cookie = 'token=; Max-Age=0; path=/;';
 			const redirectUrl = new URL('/login', window.location.origin);
 			redirectUrl.searchParams.set('from', '/dashboard');
 			window.location.href = redirectUrl.toString();
