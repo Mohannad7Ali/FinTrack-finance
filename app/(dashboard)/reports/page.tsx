@@ -65,7 +65,7 @@ export default function ReportsPage() {
 			{/* ************************************** */}
 			{/* تحليل الذكاء الاصطناعي (يأخذ مساحة عرض كاملة) */}
 			{/* ************************************** */}
-			<AIFinancialAnalysis months={6} autoFetch={true} className="mt-2" />
+			<AIFinancialAnalysis autoFetch={true} className="mt-2" />
 
 			{/* الرسوم البيانية: تتراص عمودياً على الجوال، وأفقياً على الكبيرة */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

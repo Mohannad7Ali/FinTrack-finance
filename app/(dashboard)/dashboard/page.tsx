@@ -173,7 +173,7 @@ export default function Dashboard() {
 			</div>
 
 			{/* تحليل الذكاء الاصطناعي */}
-			<AIFinancialAnalysis months={6} autoFetch={true} className="mt-2" />
+			<AIFinancialAnalysis autoFetch={true} className="mt-2" />
 
 			{/* جدول المعاملات */}
 			<div>

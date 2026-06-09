@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AnalysisData {
@@ -45,7 +45,8 @@ const loadingTips = [
 const MAX_RETRIES = 3;
 const BASE_DELAY = 1500;
 
-export function AIFinancialAnalysis({ className = '', autoFetch = true, months = 6 }) {
+export function AIFinancialAnalysis({ className = '', autoFetch = true }) {
+	const [selectedMonths, setSelectedMonths] = useState(6);
 	const [data, setData] = useState<AnalysisData | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -56,6 +57,7 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 	const tipIntervalRef = useRef<NodeJS.Timeout | null>(null);
 	const mountedRef = useRef(true);
 
+	// تغيير النصائح أثناء التحميل
 	useEffect(() => {
 		if (loading) {
 			tipIntervalRef.current = setInterval(() => {
@@ -86,7 +88,7 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 
 			try {
 				const timeoutId = setTimeout(() => controller.abort(), 50000);
-				const url = `/api/ai/financial-analysis?months=${months}${forceRefresh ? '&refresh=true' : ''}`;
+				const url = `/api/ai/financial-analysis?months=${selectedMonths}${forceRefresh ? '&refresh=true' : ''}`;
 				const res = await fetch(url, {
 					signal,
 					headers: { 'Cache-Control': 'no-cache' },
@@ -131,9 +133,27 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 				}
 			}
 		},
-		[months]
+		[selectedMonths] // يعتمد على عدد الأشهر المختار
 	);
 
+	// جلب أولي عند تحميل المكون أو تغيير عدد الأشهر
+	useEffect(() => {
+		mountedRef.current = true;
+		if (autoFetch) fetchAnalysis(false);
+		return () => {
+			mountedRef.current = false;
+			if (abortControllerRef.current) abortControllerRef.current.abort();
+		};
+	}, [autoFetch, fetchAnalysis]);
+
+	// جلب البيانات تلقائياً عند تغيير selectedMonths (إذا كان autoFetch true)
+	useEffect(() => {
+		if (autoFetch && mountedRef.current) {
+			fetchAnalysis(false);
+		}
+	}, [selectedMonths, autoFetch, fetchAnalysis]);
+
+	// التحقق من وضع عدم الاتصال (offline)
 	useEffect(() => {
 		if (!navigator.onLine) {
 			const cached = localStorage.getItem('last_ai_analysis');
@@ -147,31 +167,31 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 		}
 	}, []);
 
-	useEffect(() => {
-		mountedRef.current = true;
-		if (autoFetch) fetchAnalysis(false);
-		return () => {
-			mountedRef.current = false;
-			if (abortControllerRef.current) abortControllerRef.current.abort();
-		};
-	}, [autoFetch, fetchAnalysis]);
-
 	const handleRefresh = () => {
 		fetchAnalysis(true);
 	};
 
+	const handleMonthsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		const newMonths = parseInt(e.target.value, 10);
+		setSelectedMonths(newMonths);
+	};
+
+	// عرض التحميل ...
 	if (loading) {
 		return (
 			<Card
 				className={`overflow-hidden border-emerald-500/20 bg-slate-950/50 backdrop-blur-xl ${className}`}
 			>
 				<CardHeader className="pb-4">
-					<div className="flex items-center gap-3">
-						<div className="relative">
-							<BrainCircuit className="h-6 w-6 text-emerald-400 animate-pulse" />
-							<div className="absolute inset-0 blur-lg bg-emerald-400/50 animate-pulse" />
+					<div className="flex items-center justify-between gap-3">
+						<div className="flex items-center gap-3">
+							<div className="relative">
+								<BrainCircuit className="h-6 w-6 text-emerald-400 animate-pulse" />
+								<div className="absolute inset-0 blur-lg bg-emerald-400/50 animate-pulse" />
+							</div>
+							<Skeleton className="h-6 w-48 bg-slate-800" />
 						</div>
-						<Skeleton className="h-6 w-48 bg-slate-800" />
+						<Skeleton className="h-10 w-28 bg-slate-800 rounded-lg" />
 					</div>
 				</CardHeader>
 				<CardContent className="space-y-6 px-4 sm:px-6">
@@ -203,9 +223,22 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 		return (
 			<Card className={`border-amber-500/20 bg-slate-950/40 backdrop-blur-xl ${className}`}>
 				<CardHeader>
-					<CardTitle className="flex items-center gap-2 text-amber-400 text-lg">
-						<Sparkles className="h-5 w-5" />
-						تحليل ذكي قيد التحضير
+					<CardTitle className="flex items-center justify-between gap-2 text-amber-400 text-lg">
+						<span className="flex items-center gap-2">
+							<Sparkles className="h-5 w-5" />
+							تحليل ذكي قيد التحضير
+						</span>
+						<select
+							value={selectedMonths}
+							onChange={handleMonthsChange}
+							className="bg-slate-800 border border-amber-500/30 rounded-lg px-3 py-1 text-sm text-white focus:outline-none"
+						>
+							{[...Array(12)].map((_, i) => (
+								<option key={i} value={i + 1}>
+									آخر {i + 1} شهر
+								</option>
+							))}
+						</select>
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="px-4 sm:px-6">
@@ -291,6 +324,19 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true, months =
 						</div>
 
 						<div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+							{/* قائمة اختيار عدد الأشهر */}
+							<select
+								value={selectedMonths}
+								onChange={handleMonthsChange}
+								className="bg-slate-800/80 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+								onClick={(e) => e.stopPropagation()}
+							>
+								{[...Array(12)].map((_, i) => (
+									<option key={i} value={i + 1}>
+										آخر {i + 1} شهر
+									</option>
+								))}
+							</select>
 							<Badge
 								className={`px-3 py-1.5 rounded-lg border bg-gradient-to-tr ${healthStyles} font-bold`}
 							>
