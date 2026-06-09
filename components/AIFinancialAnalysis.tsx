@@ -337,11 +337,11 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true }) {
 									</option>
 								))}
 							</select>
-							<Badge
+							{/* <Badge
 								className={`px-3 py-1.5 rounded-lg border bg-gradient-to-tr ${healthStyles} font-bold`}
 							>
 								{data.financial_health}
-							</Badge>
+							</Badge> */}
 							<div className="p-1.5 rounded-full bg-white/5 text-slate-400">
 								{expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
 							</div>
@@ -358,6 +358,11 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true }) {
 							transition={{ duration: 0.4, ease: 'circOut' }}
 						>
 							<CardContent className="space-y-6 pt-0 px-4 sm:px-6 pb-6">
+								<Badge
+									className={`px-3 py-5 rounded-lg border bg-gradient-to-tr ${healthStyles} font-bold whitespace-normal break-words text-right`}
+								>
+									{data.financial_health}
+								</Badge>
 								{/* Grid for Patterns & Savings */}
 								<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 									{/* Spending Patterns */}
