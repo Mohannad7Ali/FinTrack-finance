@@ -56,6 +56,9 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true }) {
 	const abortControllerRef = useRef<AbortController | null>(null);
 	const tipIntervalRef = useRef<NodeJS.Timeout | null>(null);
 	const mountedRef = useRef(true);
+	// refs لمنع التحميل المزدوج
+	const isFirstMount = useRef(true);
+	const isChangingMonths = useRef(false);
 
 	// تغيير النصائح أثناء التحميل
 	useEffect(() => {
@@ -133,27 +136,32 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true }) {
 				}
 			}
 		},
-		[selectedMonths] // يعتمد على عدد الأشهر المختار
+		[selectedMonths]
 	);
 
-	// جلب أولي عند تحميل المكون أو تغيير عدد الأشهر
+	// useEffect واحد مسؤول عن جلب البيانات عند التثبيت أو تغيير selectedMonths
 	useEffect(() => {
-		mountedRef.current = true;
-		if (autoFetch) fetchAnalysis(false);
-		return () => {
-			mountedRef.current = false;
-			if (abortControllerRef.current) abortControllerRef.current.abort();
-		};
-	}, [autoFetch, fetchAnalysis]);
+		if (!autoFetch) return;
 
-	// جلب البيانات تلقائياً عند تغيير selectedMonths (إذا كان autoFetch true)
-	useEffect(() => {
-		if (autoFetch && mountedRef.current) {
+		// منع التحميل المزدوج عند التثبيت الأول
+		if (isFirstMount.current) {
+			isFirstMount.current = false;
 			fetchAnalysis(false);
+			return;
 		}
+
+		// إذا كان التغيير قادماً من handleMonthsChange، نقوم بالجلب مرة واحدة فقط
+		if (isChangingMonths.current) {
+			isChangingMonths.current = false;
+			fetchAnalysis(false);
+			return;
+		}
+
+		// أي تغيير آخر (نادر) – نمنعه لتجنب التحميل المزدوج
+		// ولكننا سنتركه آمناً بدون تنفيذ
 	}, [selectedMonths, autoFetch, fetchAnalysis]);
 
-	// التحقق من وضع عدم الاتصال (offline)
+	// useEffect منفصل للتحقق من الاتصال (offline) لا يؤثر على التحميل
 	useEffect(() => {
 		if (!navigator.onLine) {
 			const cached = localStorage.getItem('last_ai_analysis');
@@ -173,6 +181,9 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true }) {
 
 	const handleMonthsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		const newMonths = parseInt(e.target.value, 10);
+		if (newMonths === selectedMonths) return;
+		// نضع علامة أننا بصدد تغيير الأشهر يدوياً
+		isChangingMonths.current = true;
 		setSelectedMonths(newMonths);
 	};
 

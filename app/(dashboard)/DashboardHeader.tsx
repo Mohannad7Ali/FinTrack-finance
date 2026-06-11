@@ -1,5 +1,4 @@
 'use client';
-
 import React, { memo, useState, useRef, useEffect } from 'react';
 import { Menu, RefreshCw, MapPin, TrendingUp, Sparkles } from 'lucide-react';
 import { weekdaysAr, monthNamesAr } from '@/lib/constants/date.constant';
@@ -29,8 +28,6 @@ function DashboardHeaderComponent({ month, year, onLogout, onMenuClick }: Props)
 	const currentDayName = weekdaysAr[today.getDay()];
 	const currentDayNumber = today.getDate();
 	const currentMonthName = monthNamesAr[today.getMonth()];
-	const currentFullYear = today.getFullYear();
-
 	const hours = today.getHours();
 	const greeting = hours < 12 ? 'صباح الخير' : hours < 20 ? 'أهلاً بك' : 'مساء الخير';
 
@@ -52,120 +49,135 @@ function DashboardHeaderComponent({ month, year, onLogout, onMenuClick }: Props)
 
 	return (
 		<motion.header
-			initial={{ opacity: 0, y: -10 }}
+			initial={{ opacity: 0, y: -20 }}
 			animate={{ opacity: 1, y: 0 }}
+			transition={{ duration: 0.7, ease: 'easeOut' }}
 			dir="rtl"
-			className="relative w-full overflow-hidden flex flex-col bg-slate-900/60 backdrop-blur-2xl rounded-[2rem] border border-white/10 shadow-2xl ring-1 ring-white/5 group"
+			className="relative w-full overflow-hidden flex flex-col 
+                 bg-gradient-to-r from-emerald-900/30 via-slate-800/70 to-emerald-900/30 
+                 backdrop-blur-3xl rounded-[2.75rem] 
+                 border border-white/10 shadow-2xl group"
 		>
-			{/* ومضة زجاجية سريعة (The Glint Effect) بدل الـ Shimmer القديم */}
-			<div className="absolute inset-0 w-[150%] h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:animate-[glint_0.8s_ease-in-out] pointer-events-none" />
+			{/* تأثيرات الـ Glow المستوحاة من الهيرو */}
+			<div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full filter blur-3xl -z-0" />
+			<div className="absolute bottom-0 left-10 w-64 h-64 bg-cyan-500/8 rounded-full filter blur-3xl -z-0" />
+
+			{/* Glint Effect ناعم */}
+			<div className="absolute inset-0 w-[180%] h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:animate-[glint_1.3s_ease-in-out] pointer-events-none" />
 
 			<style jsx>{`
 				@keyframes glint {
 					0% {
-						transform: translateX(-150%) skewX(-12deg);
+						transform: translateX(-180%) skewX(-12deg);
 					}
 					100% {
-						transform: translateX(150%) skewX(-12deg);
+						transform: translateX(180%) skewX(-12deg);
 					}
 				}
 			`}</style>
 
-			{/* إضاءة خلفية خافتة جداً لزيادة العمق */}
-			<div className="absolute top-[-10%] left-[20%] w-1/2 h-1/2 bg-emerald-500/5 blur-[100px] pointer-events-none" />
-
-			<div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4 p-5 md:px-8 md:py-5">
-				{/* القسم الأيمن: الشعار والترحيب */}
-				<div className="flex items-center gap-4 w-full sm:w-auto">
+			<div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-5 p-6 md:px-10 md:py-7">
+				{/* الجانب الأيمن */}
+				<div className="flex items-center gap-5 w-full sm:w-auto">
 					<motion.button
 						whileTap={{ scale: 0.9 }}
 						onClick={onMenuClick}
-						className="lg:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-emerald-400"
+						className="lg:hidden p-3 rounded-2xl bg-white/5 hover:bg-emerald-500/10 border border-white/10 text-emerald-400 transition-all"
 					>
-						<Menu size={18} />
+						<Menu size={20} />
 					</motion.button>
 
 					<div className="flex flex-col">
-						<div className="flex items-center gap-2 scale-90 origin-right">
+						<div className="flex items-center gap-3">
 							<LogoName />
-							<span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400/70 px-2 py-0.5 rounded-full border border-emerald-500/20">
+							<span className="text-[10px] font-bold tracking-widest bg-emerald-500/10 text-emerald-400 px-3.5 py-1 rounded-full border border-emerald-500/20">
 								{month.toString().padStart(2, '0')}/{year}
 							</span>
 						</div>
-						<h1 className="text-base md:text-lg font-bold text-white mt-1 flex items-center gap-2">
-							<span className="opacity-70 font-medium">{greeting}،</span>
-							<span className="bg-gradient-to-l from-white via-emerald-200 to-sky-300 bg-clip-text text-transparent font-black">
+
+						<h1 className="text-xl md:text-2xl font-bold text-white mt-2 flex items-center gap-3">
+							<span className="opacity-80">{greeting}،</span>
+							<span className="bg-gradient-to-l from-white via-emerald-300 to-emerald-200 bg-clip-text text-transparent font-black">
 								{userData?.name?.split(' ')[0] || 'مستخدم'}
 							</span>
-							<Sparkles size={14} className="text-amber-400 animate-pulse" />
+							<Sparkles size={18} className="text-amber-300" />
 						</h1>
 					</div>
 				</div>
 
-				{/* القسم الأوسط: التاريخ (مخفي في الشاشات الصغيرة جداً) */}
-				<div className="hidden md:flex flex-col items-center opacity-40">
-					<span className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-400">
-						Current Date
+				{/* التاريخ */}
+				<div className="hidden md:flex flex-col items-center opacity-70">
+					<span className="text-[10px] font-black tracking-[0.3em] uppercase text-slate-400">
+						اليوم
 					</span>
-					<span className="text-xs font-bold text-white">
+					<span className="text-sm font-semibold text-white/90">
 						{currentDayName} {currentDayNumber} {currentMonthName}
 					</span>
 				</div>
 
-				{/* القسم الأيسر: الطقس والمستخدم */}
-				<div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-					{/* الطقس بنسخة أنيقة جداً */}
-					<div className="flex items-center gap-2.5 bg-black/20 rounded-2xl px-3 py-1.5 border border-white/5 group/weather hover:border-emerald-500/30 transition-all">
+				{/* الجانب الأيسر */}
+				<div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+					{/* Weather Card */}
+					<motion.div
+						whileHover={{ scale: 1.03 }}
+						className="flex items-center gap-3.5 bg-slate-900/60 backdrop-blur-xl rounded-3xl px-6 py-3.5 border border-emerald-500/20 hover:border-emerald-400/40 transition-all group/weather cursor-pointer"
+						onClick={() => !weatherLoading && refetch()}
+					>
 						{weatherLoading || isLocating ? (
-							<RefreshCw size={14} className="animate-spin text-emerald-500/50" />
+							<RefreshCw size={24} className="animate-spin text-emerald-400" />
 						) : weather ? (
 							<>
-								<span className="text-xl drop-shadow-sm group-hover/weather:scale-110 transition-transform">
+								<span className="text-4xl drop-shadow-lg group-hover/weather:scale-110 transition-transform">
 									{weather.conditionIcon}
 								</span>
-								<div className="flex flex-col">
-									<span className="text-xs font-black text-white">{weather.temp}°C</span>
-									<span className="text-[9px] text-slate-500 font-bold flex items-center gap-0.5">
-										<MapPin size={8} /> Syria
-									</span>
+								<div>
+									<div className="text-[28px] font-bold text-white leading-none">
+										{weather.temp}°C
+									</div>
+									<div className="text-xs text-emerald-400/80 flex items-center gap-1 mt-0.5">
+										<MapPin size={13} /> سوريا
+									</div>
 								</div>
 							</>
 						) : (
 							<RefreshCw
-								onClick={() => refetch()}
-								size={14}
-								className="text-slate-500 cursor-pointer"
+								size={24}
+								onClick={refetch}
+								className="text-slate-400 hover:text-emerald-400 cursor-pointer"
 							/>
 						)}
-					</div>
+					</motion.div>
 
-					{/* الصورة الشخصية */}
-					<div className="relative group shrink-0" ref={menuRef}>
+					{/* Avatar */}
+					<div className="relative group" ref={menuRef}>
 						<motion.div
-							whileHover={{ scale: 1.05 }}
-							className="p-[2px] rounded-full bg-gradient-to-tr from-emerald-500/40 to-sky-500/40 border border-white/20 cursor-pointer"
+							whileHover={{ scale: 1.07 }}
+							whileTap={{ scale: 0.96 }}
+							className="p-[3px] rounded-full bg-gradient-to-tr from-emerald-500/70 to-cyan-400/60 cursor-pointer shadow-lg shadow-emerald-500/20"
 							onClick={() => setOpen(!open)}
 						>
-							<Image
-								src={userData?.image || '/images/avatar.png'}
-								alt="User"
-								width={36}
-								height={36}
-								className="w-9 h-9 rounded-full object-cover border border-slate-900 shadow-xl"
-							/>
+							<div className="bg-slate-900 rounded-full p-0.5 border border-white/10">
+								<Image
+									src={userData?.image || '/images/avatar.png'}
+									alt="User"
+									width={46}
+									height={46}
+									className="w-[46px] h-[46px] rounded-full object-cover"
+								/>
+							</div>
 						</motion.div>
 
 						<AnimatePresence>
 							{open && (
 								<motion.div
-									initial={{ opacity: 0, y: 10, scale: 0.95 }}
+									initial={{ opacity: 0, y: 12, scale: 0.95 }}
 									animate={{ opacity: 1, y: 0, scale: 1 }}
-									exit={{ opacity: 0, y: 10, scale: 0.95 }}
-									className="absolute left-0 top-full mt-3 w-48 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl z-50 py-1"
+									exit={{ opacity: 0, y: 12, scale: 0.95 }}
+									className="absolute left-0 top-full mt-4 w-56 bg-slate-900/95 backdrop-blur-3xl border border-white/10 rounded-3xl shadow-2xl py-2 z-50"
 								>
 									<button
 										onClick={onLogout}
-										className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-500/10 transition-all text-right"
+										className="w-full flex items-center gap-3 px-6 py-3 text-sm text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-all rounded-2xl"
 									>
 										تسجيل الخروج
 									</button>
@@ -176,36 +188,32 @@ function DashboardHeaderComponent({ month, year, onLogout, onMenuClick }: Props)
 				</div>
 			</div>
 
-			{/* شريط العملات (Sleek Ticker) */}
-			<div className="relative z-10 w-full border-t border-white/5 bg-white/[0.02] py-2 px-6">
+			{/* Currency Ticker - متسق مع الهيرو */}
+			<div className="relative z-10 border-t border-white/10 bg-white/[0.02] py-3.5 px-8">
 				<div className="flex items-center gap-8 overflow-x-auto no-scrollbar justify-center sm:justify-start">
-					{/* USD */}
-					<div className="flex items-center gap-2.5 shrink-0">
-						<div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-						<span className="text-[10px] font-black text-slate-400">USD</span>
-						<div className="flex items-center gap-2 font-mono">
-							<span className="text-xs font-bold text-white/90">{formatPrice(usdToSyp)}</span>
-							<span className="text-[10px] text-slate-600">|</span>
-							<span className="text-[10px] text-slate-500">{formatPrice(usdToSyp * 100)}</span>
+					<div className="flex items-center gap-3 shrink-0">
+						<div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgb(52,211,153)]" />
+						<span className="text-xs font-bold text-slate-300">USD</span>
+						<div className="font-mono text-base">
+							<span className="text-white font-semibold">{formatPrice(usdToSyp)}</span>
+							<span className="text-slate-600 mx-2">•</span>
+							<span className="text-emerald-400/90 text-sm">{formatPrice(usdToSyp * 100)}</span>
 						</div>
 					</div>
 
-					{/* EUR */}
-					<div className="flex items-center gap-2.5 shrink-0">
-						<div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-						<span className="text-[10px] font-black text-slate-400">EUR</span>
-						<div className="flex items-center gap-2 font-mono">
-							<span className="text-xs font-bold text-white/90">{formatPrice(eurToSyp)}</span>
-							<span className="text-[10px] text-slate-600">|</span>
-							<span className="text-[10px] text-slate-500">{formatPrice(eurToSyp * 100)}</span>
+					<div className="flex items-center gap-3 shrink-0">
+						<div className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_12px_rgb(103,232,249)]" />
+						<span className="text-xs font-bold text-slate-300">EUR</span>
+						<div className="font-mono text-base">
+							<span className="text-white font-semibold">{formatPrice(eurToSyp)}</span>
+							<span className="text-slate-600 mx-2">•</span>
+							<span className="text-emerald-400/90 text-sm">{formatPrice(eurToSyp * 100)}</span>
 						</div>
 					</div>
 
-					<div className="hidden sm:flex items-center gap-1.5 mr-auto opacity-20">
-						<TrendingUp size={10} className="text-emerald-400" />
-						<span className="text-[8px] font-black uppercase tracking-widest text-white">
-							Market Active
-						</span>
+					<div className="hidden sm:flex items-center gap-2 ml-auto opacity-50">
+						<TrendingUp size={15} className="text-emerald-400" />
+						<span className="text-[10px] font-black uppercase tracking-widest">السوق نشط</span>
 					</div>
 				</div>
 			</div>
