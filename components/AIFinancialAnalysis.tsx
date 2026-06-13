@@ -50,7 +50,7 @@ export function AIFinancialAnalysis({ className = '', autoFetch = true }) {
 	const [data, setData] = useState<AnalysisData | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [expanded, setExpanded] = useState(true);
+	const [expanded, setExpanded] = useState(false);
 	const [tipIndex, setTipIndex] = useState(0);
 	const [retryMessage, setRetryMessage] = useState<string | null>(null);
 	const abortControllerRef = useRef<AbortController | null>(null);
