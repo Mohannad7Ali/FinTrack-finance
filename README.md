@@ -16,6 +16,7 @@ This project highlights modern full-stack development using Next.js 16 (App Rout
 
 <p align="center">
 <img src="https://raw.githubusercontent.com/Mohannad7Ali/FinTrack-finance/main/assets/screenshots/transactions.png" alt="transactions" width="48%">
+<img src="https://raw.githubusercontent.com/Mohannad7Ali/FinTrack-finance/main/assets/screenshots/dashboard_overview.png" alt="dashboard" width="48%">
 <img src="https://raw.githubusercontent.com/Mohannad7Ali/FinTrack-finance/main/assets/screenshots/ai.png" alt="ai" width="48%">
 <img src="https://raw.githubusercontent.com/Mohannad7Ali/FinTrack-finance/main/assets/screenshots/reports.png" alt="reports" width="48%">
 </p>
