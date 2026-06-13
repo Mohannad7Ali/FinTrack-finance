@@ -20,8 +20,6 @@ This project highlights modern full-stack development using Next.js 16 (App Rout
 <img src="https://raw.githubusercontent.com/Mohannad7Ali/FinTrack-finance/main/assets/screenshots/reports.png" alt="reports" width="48%">
 </p>
 
-> **Note:** Replace these placeholder images with actual screenshots of your application before publishing.
-
 ## 🚀 Quick Start
 
 ```bash
